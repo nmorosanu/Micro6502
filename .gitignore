@@ -1,0 +1,4 @@
+*.core
+*.out
+*.o
+bin/

@@ -1,0 +1,2 @@
+.rodata
+.code
