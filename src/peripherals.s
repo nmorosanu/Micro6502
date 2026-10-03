@@ -1,4 +1,4 @@
-.include    "../inc/memory.inc"
+.include    "./inc/memory.inc"
 
 .code
 .export     peripherals_config

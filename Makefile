@@ -1,50 +1,70 @@
-.SUFFIXES: .c .s .o
+LD		 := ld65
+LDFLAGS  := -v -S 0x8000
+AS 		 := ca65
+ASFLAGS  := -v --cpu W65C02
+CC		 := cc65
+CFLAGS	 := -v --cpu W65C02
+SIM		 :=	sim65
+SIMFLAGS :=	
 
-LD		 	= 	ld65
-LD_FLAGS 	= 	-v -S 0x8000
-AS 			= 	ca65
-AS_FLAGS 	= 	-v --cpu W65C02
-CC			= 	cc65
-CC_FLAGS	= 	-v --cpu W65C02
-SIM			=	sim65
-SIMFLAGS	=	
+DIR_SRC		:=	src
+DIR_BUILD	:=	build
+DIR_DEBUG	:=	debug
+DIR_OBJ		:=	$(DIR_BUILD)/obj
+DIR_BIN		:=	$(DIR_BUILD)/bin
 
-ASM_SRC 	= 	src/main.s\
-				src/vectors.s\
-				src/peripherals.s\
-				src/program.s\
-				src/monitor.s\
-				src/games.s
+C_SRCS		:=	$(shell find $(DIR_SRC) -type f -name "*.c")
+ASM_SRCS	:=	$(shell find $(DIR_SRC) -type f -name "*.s")
+C_OBJS		:=	$(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%.c.o,$(C_SRCS))
+ASM_OBJS	:=	$(patsubst $(DIR_SRC)/%.s,$(DIR_OBJ)/%.s.o,$(ASM_SRCS))
+OBJS		:=	$(C_OBJS) \
+				$(ASM_OBJS)
 
-DIR_BUILD		=	build
-ASM_OBJ 		= 	$(ASM_SRC:%.s=%.o)
-FIRMWARE		= 	firmware.bin
-FIRMWARE_SIM	=	simulation.bin
+FIRMWARE		:= 	firmware.bin
+FIRMWARE_SIM	:=	simulation.bin
 
-sim: $(ASM_OBJ)
-	$(LD) $(LD_FLAGS) -t sim65c02 -o $(DIR_BUILD)/$(FIRMWARE_SIM) $(ASM_OBJ) /share/cc65/lib/sim65c02.lib
-	$(SIM) --cycles --trace -v $(DIR_BUILD)/$(FIRMWARE_SIM)
+.PHONY: sim
+sim: $(OBJS)
+	@mkdir -p $(DIR_BIN)
+	$(LD) $(LDFLAGS) -t sim65c02 -o $(DIR_BIN)/$(FIRMWARE_SIM) $(OBJS) /share/cc65/lib/sim65c02.lib
+	$(SIM) --cycles --trace -v $(DIR_BIN)/$(FIRMWARE_SIM)
 
-$(FIRMWARE): $(ASM_OBJ)
-	$(LD) $(LD_FLAGS) -C mem.cfg $(ASM_OBJ)
-	rm $(ASM_OBJ)
+$(FIRMWARE): $(OBJS)
+	@mkdir -p $(DIR_BIN)
+	@echo "[Linking into $@] $<"
+	$(LD) $(LDFLAGS) -C mem.cfg $(OBJS)
 
-.s.o:
-	$(AS) $(AS_FLAGS) -o $@ $<
-.c.o:
-	$(CC) $(CC_FLAGS) -o $@ $<
+$(DIR_OBJ)/%.c.o: $(DIR_SRC)/%.c
+	@mkdir -p $(DIR_OBJ)
+	@echo "[Compiling C file $< to $@]"
+	$(CC) $(CFLAGS) -o $@ $<
 
+$(DIR_OBJ)/%.s.o: $(DIR_SRC)/%.s
+	@mkdir -p $(DIR_OBJ)
+	@echo "[Compiling ASSEMBLY file $< to $@]"
+	$(AS) $(ASFLAGS) -o $@ $<
+
+.PHONY: prg
 prg:  $(FIRMWARE)
+	@echo "[Sending data over UART]"
 	python3 uartup.py
 
+.PHONY: ru
 ru:	$(FIRMWARE)
-	minipro -p AT28C256 -w $(DIR_BUILD)/$(FIRMWARE) -u
+	@echo "[Programming EEPROM]"
+	minipro -p AT28C256 -w $(DIR_BIN)/$(FIRMWARE) -u
+
+.PHONY: rd
 rd:
-	minipro -p AT28C256 -r $(DIR_BUILD)/$(FIRMWARE).d
+	@echo "[Dumping EEPROM]"
+	minipro -p AT28C256 -r $(DIR_DEBUG)/$(FIRMWARE).dumped
+
+.PHONY: re
 re:
+	@echo "[Erasing EEPROM]"
 	minipro -p AT28C256 -E
 
-clr:
-	rm -f $(ASM_OBJ) $(FIRMWARE)
-
 .PHONY: clr
+clr:
+	@echo "[Clearing build and debug dirs]"
+	rm -rf $(DIR_BUILD) $(DIR_DEBUG)

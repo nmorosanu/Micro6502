@@ -1,5 +1,5 @@
-.include    "../inc/memory.inc"
-.include    "../inc/peripherals.inc"
+.include    "./inc/memory.inc"
+.include    "./inc/peripherals.inc"
 
 .rodata
 .code
