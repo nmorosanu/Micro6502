@@ -1,4 +1,5 @@
 *.core
 *.out
 *.o
-bin/
+build/
+debug/
