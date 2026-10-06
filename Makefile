@@ -1,27 +1,29 @@
-LD		 := ld65
-LDFLAGS  := -v -S 0x8000
-AS 		 := ca65
-ASFLAGS  := -v --cpu W65C02
-CC		 := cc65
-CFLAGS	 := -v --cpu W65C02
-SIM		 :=	sim65
-SIMFLAGS :=	
+LD		 	 = ld65
+LDFLAGS  	 = -v -S 0x8000
+AS 		 	 = ca65
+ASFLAGS  	 = -v --cpu W65C02
+CC		 	 = cc65
+CFLAGS	 	 = -v --cpu W65C02
+SIM		 	 =	sim65
+SIMFLAGS 	 =	
 
-DIR_SRC		:=	src
-DIR_BUILD	:=	build
-DIR_DEBUG	:=	debug
-DIR_OBJ		:=	$(DIR_BUILD)/obj
-DIR_BIN		:=	$(DIR_BUILD)/bin
+DIR_SRC		 =	src
+DIR_BUILD	 =	build
+DIR_DEBUG	 =	debug
+DIR_OBJ		 =	$(DIR_BUILD)/obj
+DIR_BIN		 =	$(DIR_BUILD)/bin
 
-C_SRCS		:=	$(shell find $(DIR_SRC) -type f -name "*.c")
-ASM_SRCS	:=	$(shell find $(DIR_SRC) -type f -name "*.s")
-C_OBJS		:=	$(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%.c.o,$(C_SRCS))
-ASM_OBJS	:=	$(patsubst $(DIR_SRC)/%.s,$(DIR_OBJ)/%.s.o,$(ASM_SRCS))
-OBJS		:=	$(C_OBJS) \
+C_SRCS		 =	$(shell find $(DIR_SRC) -type f -name "*.c")
+ASM_SRCS	 =	$(shell find $(DIR_SRC) -type f -name "*.s")
+C_OBJS		 =	$(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%.c.o,$(C_SRCS))
+ASM_OBJS	 =	$(patsubst $(DIR_SRC)/%.s,$(DIR_OBJ)/%.s.o,$(ASM_SRCS))
+OBJS		 =	$(C_OBJS) \
 				$(ASM_OBJS)
 
-FIRMWARE		:= 	firmware.bin
-FIRMWARE_SIM	:=	simulation.bin
+FIRMWARE	 = 	firmware.bin
+FIRMWARE_SIM =	simulation.bin
+
+all: $(FIRMWARE)
 
 .PHONY: sim
 sim: $(OBJS)

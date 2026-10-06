@@ -1,203 +1,231 @@
 .include    "./inc/memory.inc"
 
 .code
-.export     peripherals_config
-peripherals_config:
-            ;       VIA CONFIGURATION
-            lda     #$FF
-            sta     VIA_DDRA            ;
-            stz     VIA_PORTA           ;
-            sta     VIA_DDRB            ;   PORTA = PORTB = x00
-            stz     VIA_PORTB           ;
+.export _peripherals_config
+_peripherals_config:
+    ;       VIA CONFIGURATION
+    lda     #$FF
+    sta     VIA_DDRA            ;
+    stz     VIA_PORTA           ;
+    sta     VIA_DDRB            ;   PORTA = PORTB = x00
+    stz     VIA_PORTB           ;
 
-            ;       ACIA CONFIGURATION
-            stz     ACIA_STATUS         ;   soft reset
-            lda     #$1F
-            sta     ACIA_CONTROL
-            lda     #$09
-            sta     ACIA_COMMAND
+    ;       ACIA CONFIGURATION
+    stz     ACIA_STATUS         ;   soft reset
+    lda     #$1F
+    sta     ACIA_CONTROL
+    lda     #$09
+    sta     ACIA_COMMAND
 
-            ldx     #$FF                ;
+    ldx     #$FF                ;
 @b0:                                    ;
-            lda     #$FF                ;
+    lda     #$FF                ;
 @b1:        dec                         ;   delay scurt pentru LCD
-            bne     @b1                 ;
-            dex                         ;
-            bne     @b0                 ;
+    bne     @b1                 ;
+    dex                         ;
+    bne     @b0                 ;
 
-            lda     #$02                ;
-            jsr     lcd_wcmd            ;
+    lda     #$02                ;
+    jsr     _lcd_command        ;
 
-            lda     #$28                ;
-            jsr     lcd_wcmd            ;
+    lda     #$28                ;
+    jsr     _lcd_command        ;
 
-            lda     #$06                ;
-            jsr     lcd_wcmd            ;
+    lda     #$06                ;
+    jsr     _lcd_command        ;
 
-            lda     #$0C                ;
-            jsr     lcd_wcmd            ;
+    lda     #$0C                ;
+    jsr     _lcd_command        ;
 
-            lda     #$01                ;
-            jsr     lcd_wcmd            ;
-            lda     #$80                ;
-            jsr     lcd_wcmd            ;   CLEAR
+    lda     #$01                ;
+    jsr     _lcd_command        ;
+    lda     #$80                ;
+    jsr     _lcd_command        ;   CLEAR
 
-            rts
+    rts
 
-.export     lcd_dly
-lcd_dly:    pha
-            lda     #$30
+.export     _lcd_delay
+_lcd_delay:   pha
+    lda     #$30
+@loop:
+    dec
+    bne     @loop
 
-@loop:      dec
-            bne     @loop
+    pla
+    rts
 
-            pla
-            rts
+.export _lcd_clear
+_lcd_clear:
+    pha
+    lda     #$01
+    jsr     _lcd_command
+    lda     #$80
+    jsr     _lcd_command
+    pla
+    rts
 
-.export     lcd_clr
-lcd_clr:    pha
-            lda     #$01
-            jsr     lcd_wcmd
-            lda     #$80
-            jsr     lcd_wcmd
-            pla
-            rts
+.export _lcd_command
+_lcd_command:
+    pha
 
-.export     lcd_wcmd
-lcd_wcmd:   pha
+    sta     zp_tmp
+    and     #$F0
+    ora     #$08
+    sta     VIA_PORTB
 
-            sta     zp_tmp
-            and     #$F0
-            ora     #$08
-            sta     VIA_PORTB
+    jsr     _lcd_delay
 
-            jsr     lcd_dly
+    and     #$F0
+    sta     VIA_PORTB
 
-            and     #$F0
-            sta     VIA_PORTB
+    jsr     _lcd_delay
 
-            jsr     lcd_dly
+    lda     zp_tmp
+    rol
+    rol
+    rol
+    rol
+    and     #$F0
+    ora     #$08
+    sta     VIA_PORTB
 
-            lda     zp_tmp
-            rol
-            rol
-            rol
-            rol
-            and     #$F0
-            ora     #$08
-            sta     VIA_PORTB
+    jsr     _lcd_delay
 
-            jsr     lcd_dly
+    and     #$F0
+    sta     VIA_PORTB
 
-            and     #$F0
-            sta     VIA_PORTB
+    jsr     _lcd_delay
 
-            jsr     lcd_dly
+    pla
+    rts
 
-            pla
-            rts
+.export _lcd_write_char
+_lcd_write_char:
+    pha
 
-.export     lcd_wchr
-lcd_wchr:   pha
+    sta     zp_tmp
+    and     #$F0
+    ora     #$0C
+    sta     VIA_PORTB
 
-            sta     zp_tmp
-            and     #$F0
-            ora     #$0C
-            sta     VIA_PORTB
+    jsr     _lcd_delay
 
-            jsr     lcd_dly
+    and     #$F4
+    sta     VIA_PORTB
 
-            and     #$F4
-            sta     VIA_PORTB
+    jsr     _lcd_delay
 
-            jsr     lcd_dly
+    lda     zp_tmp
+    rol
+    rol
+    rol
+    rol
+    and     #$F0
+    ora     #$0C
+    sta     VIA_PORTB
 
-            lda     zp_tmp
-            rol
-            rol
-            rol
-            rol
-            and     #$F0
-            ora     #$0C
-            sta     VIA_PORTB
+    jsr     _lcd_delay
 
-            jsr     lcd_dly
+    and     #$F4
+    sta     VIA_PORTB
 
-            and     #$F4
-            sta     VIA_PORTB
+    jsr     _lcd_delay
 
-            jsr     lcd_dly
+    pla
+    rts
 
-            pla
-            rts
+.export _lcd_write_string
+_lcd_write_string:  
+    pha
+    phy
+    
+    sta     zp_string_buffer
+    sty     zp_string_buffer + 1
+    ldy     #$00
 
-.export     lcd_wstr
-lcd_wstr:   pha
-            phy
-            
-            sta     zp_str_buffer
-            sty     zp_str_buffer + 1
-            ldy     #$00
+@loop:      lda     (zp_string_buffer), y
+    beq     @end
 
-@loop:      lda     (zp_str_buffer), y
-            beq     @end
+    jsr     _lcd_write_char
+    iny
 
-            jsr     lcd_wchr
-            iny
-
-            bra     @loop
+    bra     @loop
 
 @end:       ply
-            pla
-            rts
+    pla
+    rts
 
-.export     uart_rb
-uart_rb:    pha
-@poll:      lda     ACIA_STATUS
-            bit     #$08
-            beq     @poll
+.export _uart_read_byte
+_uart_read_byte:
+    pha
+@poll:
+    lda     ACIA_STATUS
+    bit     #$08
+    beq     @poll
 
-            lda     ACIA_DATA
-    
-            rts
+    lda     ACIA_DATA
 
-.export     uart_wb
-uart_wb:    sta     ACIA_DATA
-            pha
-            lda     #$FF
-@b0:        dec
-            bne     @b0
-            rts
+    rts
+
+.export _uart_write_byte
+_uart_write_byte:   
+    sta     ACIA_DATA
+    pha
+    lda     #$FF                    ;
+@b0:                                ;   artificial delay to counter the WDC65C51 hardware bug
+    dec                             ;
+    bne     @b0
+    rts
+
+.export _uart_write_string
+_uart_write_string:
+    ldy     #$00
+@loop:      
+    lda     (zp_string_buffer), y
+    beq     @end
+
+    sta     ACIA_DATA
+    lda     #$FF                    ;
+@b0:                                ;   artificial delay to counter the WDC65C51 hardware bug
+    dec                             ;
+    bne     @b0
+    iny
+
+    bra     @loop
+
+@end:       
+    rts
 
 .export     acia_irq
-acia_irq:   pha
-            phx
+acia_irq:   
+    pha
+    phx
 
-            jsr     uart_rb
+    jsr     _uart_read_byte
 
-            ldx     ib_base
-            sta     ib_base, x
-        
-            cmp     #$0D                ;   CR?
-            beq     @CR
+    ldx     ib_base
+    sta     ib_base, x
 
-            jsr     uart_wb
-            inx
-            bra     @end
+    cmp     #$0D                ;   CR?
+    beq     @CR
 
-@CR:        jsr     uart_wb
-            lda     #$0A
-            jsr     uart_wb
-            ldx     #$00
+    jsr     _uart_write_byte
+    inx
+    bra     @end
+
+@CR:
+    jsr     _uart_write_byte
+    lda     #$0A
+    jsr     _uart_write_byte
+    ldx     #$00
 @end:
-            stx     ib_idx
-            plx
-            pla
+    stx     ib_idx
+    plx
+    pla
 
-            rts
-
+    rts
 
 .export     via_irq
 via_irq:    pha
-            pla
-            rts
+    pla
+    rts

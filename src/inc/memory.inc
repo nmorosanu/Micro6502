@@ -3,11 +3,11 @@
 
 ;   VARIABILE DE SISTEM [$0000, 00FF]
 
-.define zp_input_buffer $0000   ;   $00 - $01
-.define zp_str_buffer   $0002   ;   $02 - $03
-.define zp_tmp          $00A0   ;   $A0 - $EF
-.define zp_uart_antet   $00F0   ;   $F0 - $FD
-.define zp_adr_prg      $00FE   ;   $FE - $FF
+.define zp_input_buffer         $0000   ;   $00 - $01
+.define zp_string_buffer        $0002   ;   $02 - $03
+.define zp_tmp                  $00A0   ;   $A0 - $EF
+.define zp_uart_header          $00F0   ;   $F0 - $FD
+.define zp_adr_prg              $00FE   ;   $FE - $FF
 
 ;   VARIABILE DE SISTEM [$0200, $0FFF]
 .define ib_idx          $0200
