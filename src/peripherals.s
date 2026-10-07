@@ -3,14 +3,18 @@
 .code
 .export _peripherals_config
 _peripherals_config:
+    ;       =================
     ;       VIA CONFIGURATION
+    ;       =================
     lda     #$FF
     sta     VIA_DDRA            ;
     stz     VIA_PORTA           ;
     sta     VIA_DDRB            ;   PORTA = PORTB = x00
     stz     VIA_PORTB           ;
 
+    ;       ==================
     ;       ACIA CONFIGURATION
+    ;       ==================
     stz     ACIA_STATUS         ;   soft reset
     lda     #$1F
     sta     ACIA_CONTROL
@@ -66,9 +70,7 @@ _lcd_clear:
 
 .export _lcd_command
 _lcd_command:
-    pha
-
-    sta     zp_tmp
+    sta     $00
     and     #$F0
     ora     #$08
     sta     VIA_PORTB
@@ -80,7 +82,7 @@ _lcd_command:
 
     jsr     _lcd_delay
 
-    lda     zp_tmp
+    lda     $00
     rol
     rol
     rol
@@ -101,9 +103,7 @@ _lcd_command:
 
 .export _lcd_write_char
 _lcd_write_char:
-    pha
-
-    sta     zp_tmp
+    sta     $00
     and     #$F0
     ora     #$0C
     sta     VIA_PORTB
@@ -115,7 +115,7 @@ _lcd_write_char:
 
     jsr     _lcd_delay
 
-    lda     zp_tmp
+    lda     $00
     rol
     rol
     rol
@@ -130,19 +130,15 @@ _lcd_write_char:
     sta     VIA_PORTB
 
     jsr     _lcd_delay
+    lda     $00
 
-    pla
     rts
 
 .export _lcd_write_string
 _lcd_write_string:  
-    pha
-    phy
-    
     sta     zp_string_buffer
     sty     zp_string_buffer + 1
     ldy     #$00
-
 @loop:      lda     (zp_string_buffer), y
     beq     @end
 
@@ -151,8 +147,9 @@ _lcd_write_string:
 
     bra     @loop
 
-@end:       ply
-    pla
+@end:       
+    lda     zp_string_buffer
+    ldy     zp_string_buffer + 1
     rts
 
 .export _uart_read_byte
@@ -175,6 +172,7 @@ _uart_write_byte:
 @b0:                                ;   artificial delay to counter the WDC65C51 hardware bug
     dec                             ;
     bne     @b0
+    pla
     rts
 
 .export _uart_write_string
@@ -226,6 +224,7 @@ acia_irq:
     rts
 
 .export     via_irq
-via_irq:    pha
+via_irq:    
+    pha
     pla
     rts

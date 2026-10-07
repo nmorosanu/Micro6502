@@ -3,17 +3,24 @@
 
 ;   VARIABILE DE SISTEM [$0000, 00FF]
 
-.define zp_input_buffer         $0000   ;   $00 - $01
-.define zp_string_buffer        $0002   ;   $02 - $03
-.define zp_tmp                  $00A0   ;   $A0 - $EF
-.define zp_uart_header          $00F0   ;   $F0 - $FD
-.define zp_adr_prg              $00FE   ;   $FE - $FF
+.define z0                      $0000
+.define z1                      $0000
+.define z2                      $0000
+.define z3                      $0000
+.define z4                      $0000
 
-;   VARIABILE DE SISTEM [$0200, $0FFF]
-.define ib_idx          $0200
-.define irq_status      $0201
-.define tmp             $0EFF
-.define ib_base         $0F00
+.define zp_input_buffer         $00FC   ;   $FC - $FD
+.define zp_string_buffer        $00FE   ;   $FE - $FF
+
+;   STIVA HARDWARE      [$0100, $01FF]  ;
+
+;   VARIABILE DE SISTEM [$0200, $0FFF]  ;
+.define ib_base                 $0200   ;   inceputul input buffer-ului
+.define ib_idx                  $02FF   ;   indicator pentru pozitia din ib_base
+.define irq_status              $0300   ;   byte care retine ultimul registru citit dintr-un irq status
+.define crc_length              $0300
+.define crc                     $0301
+.define crc_compare             $0303
 
 ;   STIVA SOFTWARE      [$1000, $1FFF]
 ;   MEMORIE DE PROGRAM  [$2000, $7FFF]

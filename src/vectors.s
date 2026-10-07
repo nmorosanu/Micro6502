@@ -13,7 +13,7 @@ NMI:
 
 .export RESET
 RESET:      
-sei                                 ;
+    sei                                 ;
     ldx     #$FF                        ;
     txs                                 ;   init stack and peripherals
     cld                                 ;
@@ -21,13 +21,13 @@ sei                                 ;
     jsr     ram_clear
     cli                                 ;
 
-    stz     zp_tmp + $50
+    stz     $00 + $50
 
     lda     #'g'
     sta     ib_base
 
 @loop:
-    bbr0    zp_tmp + $50, @loop
+    bbr0    $00 + $50, @loop
 
 @ib_parse:
     lda     ib_base
@@ -114,18 +114,18 @@ brk_irq:
 
 ram_clear:
     lda     #$10
-    sta     zp_tmp + 1
+    sta     $00 + 1
     lda     #$00
-    sta     zp_tmp
+    sta     $00 
 
     lda     #$00
 @loop:
-    sta     (zp_tmp)
-    inc     zp_tmp
+    sta     ($00)
+    inc     $00 
     bne     @loop
 
-    inc     zp_tmp + 1
-    ldx     zp_tmp + 1
+    inc     $00 + 1
+    ldx     $00 + 1
     cpx     #$80
     bne     @loop
 

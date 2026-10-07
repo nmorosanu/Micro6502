@@ -11,9 +11,7 @@ MEM_DST = $F2
 .export monitor_init
 monitor_init:
     lda     #<_msg_monitor_init
-    sta     zp_string_buffer
-    lda     #>_msg_monitor_init
-    sta     zp_string_buffer + 1
+    ldy     #>_msg_monitor_init
     jsr     _uart_write_string
 @ib_parse:
     

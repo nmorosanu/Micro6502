@@ -1,39 +1,37 @@
 .include "inc/memory.inc"
 .include "inc/peripherals.inc"
 
-LENGTH      = $00F0
-CRC         = $00F1
-CRCCompare  = $00F4
-
 .rodata
-crc16modbus_compute:
-    sty     LENGTH
+.code
+.export crc16clc
+crc16clc:
+    sty     crc_length
     
-    lda     #$FF         ;
-    sta     CRC          ;   start with 0xFFFF
-    sta     CRC + 1      ;
+    lda     #$FF                        ;
+    sta     crc                         ;   start with 0xFFFF
+    sta     crc + 1                     ;
     
-    lda     LENGTH
-    ora     LENGTH + 1
-    beq     @end
+    lda     crc_length                  ;   check length (y)
+    ora     crc_length + 1              ;   if (length == 0)
+    beq     @end                        ;       return;
 
     ldy     #$00
 @loop_word:
     lda     (zp_string_buffer), Y
-    eor     CRC
-    sta     CRC
+    eor     crc
+    sta     crc
     ldx     #$08
 @loop_bit:
-    lsr     CRC + 1
-    ror     CRC
+    lsr     crc + 1
+    ror     crc
     bcc     @shift
     
-    lda     CRC + 1
+    lda     crc + 1
     eor     #$A0
-    sta     CRC + 1
-    lda     CRC
+    sta     crc + 1
+    lda     crc
     eor     #$01
-    sta     CRC
+    sta     crc
 @shift:
     dex
     bne     @loop_bit
@@ -41,33 +39,24 @@ crc16modbus_compute:
     bne     @increment_ptr
     inc     zp_string_buffer + 1
 @increment_ptr:
-    lda     LENGTH
+    lda     crc_length
     bne     @continue
-    dec     LENGTH + 1
+    dec     crc_length + 1
 @continue:
-    dec     LENGTH
-    lda     LENGTH
+    dec     crc_length
+    lda     crc_length
     bne     @loop_word
 @end:
     rts
 
-crc16modbus_verify:
-    stz     CRCCompare
-    stz     CRCCompare + 1
+.export crc16cmp
+crc16cmp:
 @lbyte:
-    cmp     CRC
-    beq     @hbyte
-    bra     @wrong
+    lda     crc
+    cmp     crc_compare
+    bne     @end
 @hbyte:
-    cpx     CRC + 1
-    beq     @end
-@wrong:
-    lda     #$DE
-    sta     CRCCompare
-    lda     #$AD
-    sta     CRCCompare + 1
+    lda     crc         + 1
+    cmp     crc_compare + 1
 @end:
     rts
-
-.export crc16modbus_compute
-.export crc16modbus_verify
