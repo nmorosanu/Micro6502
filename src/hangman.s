@@ -29,9 +29,9 @@ LIVES           = $00F4
 .export hangman_init
 hangman_init:
     lda     #<_msg_hangman_init
-    sta     zp_string_buffer
+    sta     ZP_STRING_BUFFER
     lda     #>_msg_hangman_init
-    sta     zp_string_buffer
+    sta     ZP_STRING_BUFFER
     jsr     _uart_write_string
 
     lda     $0000
@@ -44,15 +44,15 @@ hangman_init:
 
 draw_frame:
     lda     #<_msg_hangman_lives
-    sta     zp_string_buffer
+    sta     ZP_STRING_BUFFER
     lda     #>_msg_hangman_lives
-    sta     zp_string_buffer + 1
+    sta     ZP_STRING_BUFFER + 1
     jsr     _uart_write_string
     lda     LIVES
     jsr     _uart_write_byte
 
 @ib_parse:  
-    lda     ib_base
-    ldx     ib_idx
+    lda     IB_BASE
+    ldx     IB_IDX
 
     bra     hangman_init

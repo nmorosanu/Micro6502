@@ -24,13 +24,13 @@ RESET:
     stz     $00 + $50
 
     lda     #'g'
-    sta     ib_base
+    sta     IB_BASE
 
 @loop:
     bbr0    $00 + $50, @loop
 
 @ib_parse:
-    lda     ib_base
+    lda     IB_BASE
 
     cmp     #'p'
     beq     @program
@@ -63,7 +63,7 @@ games:
     txs
 
     ldx     #$01
-    lda     ib_base, x
+    lda     IB_BASE, x
     cmp     #'m'
     beq     @minesweeper
     cmp     #'h'

@@ -1,30 +1,24 @@
 .ifndef __MEM_H__
 .define __MEM_H__ 1
 
-;   VARIABILE DE SISTEM [$0000, 00FF]
+;   VARIABILE ZEROPAGE         [$0000 - 00FF]
 
-.define z0                      $0000
-.define z1                      $0000
-.define z2                      $0000
-.define z3                      $0000
-.define z4                      $0000
+.define ZP_INPUT_BUFFER         $00FC   ;   $FC - $FD
+.define ZP_STRING_BUFFER        $00FE   ;   $FE - $FF
 
-.define zp_input_buffer         $00FC   ;   $FC - $FD
-.define zp_string_buffer        $00FE   ;   $FE - $FF
+;   STIVA HARDWARE             [$0100 - $01FF]
 
-;   STIVA HARDWARE      [$0100, $01FF]  ;
+;   VARIABILE DE SISTEM        [$0200 - $0FFF]
+.define IB_BASE                 $0200   ;   inceputul input buffer-ului
+.define IB_IDX                  $02FF   ;   indicator pentru pozitia din ib_base
+.define IRQ_STATUS              $0300   ;   byte care retine ultimul registru citit dintr-un irq status
+.define CRC                     $0300   ;   crc16 rezultat dupa calcul
+.define CRC_LENGTH              $0302   ;   crc16 lungime
+.define CRC_COMPARE             $0304   ;   crc16 de comparat
 
-;   VARIABILE DE SISTEM [$0200, $0FFF]  ;
-.define ib_base                 $0200   ;   inceputul input buffer-ului
-.define ib_idx                  $02FF   ;   indicator pentru pozitia din ib_base
-.define irq_status              $0300   ;   byte care retine ultimul registru citit dintr-un irq status
-.define crc_length              $0300
-.define crc                     $0301
-.define crc_compare             $0303
-
-;   STIVA SOFTWARE      [$1000, $1FFF]
-;   MEMORIE DE PROGRAM  [$2000, $7FFF]
-;   PERIFERICE          [$8000, $803F]
+;   STIVA SOFTWARE (REZERVATA) [$1000 - $1FFF]
+;   MEMORIE DE PROGRAM         [$2000 - $7FFF]
+;   PERIFERICE                 [$8000 - $803F]
 .define ACIA_DATA       $8000
 .define ACIA_STATUS     $8001
 .define ACIA_COMMAND    $8002

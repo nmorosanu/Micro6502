@@ -5,58 +5,59 @@
 .code
 .export crc16clc
 crc16clc:
-    sty     crc_length
+    lda     #$FF                    ;
+    sta     CRC                     ;
+    sta     CRC + 1                 ;   CRC = xFFFF
     
-    lda     #$FF                        ;
-    sta     crc                         ;   start with 0xFFFF
-    sta     crc + 1                     ;
+    lda     CRC_LENGTH
+    ora     CRC_LENGTH + 1
+    beq     @end
     
-    lda     crc_length                  ;   check length (y)
-    ora     crc_length + 1              ;   if (length == 0)
-    beq     @end                        ;       return;
-
     ldy     #$00
-@loop_word:
-    lda     (zp_string_buffer), Y
-    eor     crc
-    sta     crc
+@loop_bytes:
+    lda     (ZP_STRING_BUFFER), y
+    eor     CRC
+    sta     CRC
+
     ldx     #$08
-@loop_bit:
-    lsr     crc + 1
-    ror     crc
-    bcc     @shift
-    
-    lda     crc + 1
+@loop_bits:
+    lsr     CRC + 1                 ;
+    ror     CRC                     ;   Check if LSB is set
+    bcc     @skip_xor
+
+    lda     CRC + 1
     eor     #$A0
-    sta     crc + 1
-    lda     crc
+    sta     CRC + 1
+    lda     CRC
     eor     #$01
-    sta     crc
-@shift:
+    sta     CRC
+@skip_xor:
     dex
-    bne     @loop_bit
-    inc     zp_string_buffer
-    bne     @increment_ptr
-    inc     zp_string_buffer + 1
-@increment_ptr:
-    lda     crc_length
-    bne     @continue
-    dec     crc_length + 1
-@continue:
-    dec     crc_length
-    lda     crc_length
-    bne     @loop_word
+    bne     @loop_bits
+
+    inc     ZP_STRING_BUFFER
+    bne     @decrement_page
+    inc     ZP_STRING_BUFFER + 1
+@decrement_page:
+    lda     CRC_LENGTH
+    bne     @decrement_length
+    dec     CRC_LENGTH + 1
+@decrement_length:
+    lda     CRC_LENGTH
+    dec
+    ora     CRC_LENGTH + 1
+    bne     @loop_bytes
 @end:
     rts
 
 .export crc16cmp
 crc16cmp:
 @lbyte:
-    lda     crc
-    cmp     crc_compare
+    lda     CRC
+    cmp     CRC_COMPARE
     bne     @end
 @hbyte:
-    lda     crc         + 1
-    cmp     crc_compare + 1
+    lda     CRC         + 1
+    cmp     CRC_COMPARE + 1
 @end:
     rts

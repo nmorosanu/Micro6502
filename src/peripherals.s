@@ -136,10 +136,10 @@ _lcd_write_char:
 
 .export _lcd_write_string
 _lcd_write_string:  
-    sta     zp_string_buffer
-    sty     zp_string_buffer + 1
+    sta     ZP_STRING_BUFFER
+    sty     ZP_STRING_BUFFER + 1
     ldy     #$00
-@loop:      lda     (zp_string_buffer), y
+@loop:      lda     (ZP_STRING_BUFFER), y
     beq     @end
 
     jsr     _lcd_write_char
@@ -148,8 +148,8 @@ _lcd_write_string:
     bra     @loop
 
 @end:       
-    lda     zp_string_buffer
-    ldy     zp_string_buffer + 1
+    lda     ZP_STRING_BUFFER
+    ldy     ZP_STRING_BUFFER + 1
     rts
 
 .export _uart_read_byte
@@ -179,7 +179,7 @@ _uart_write_byte:
 _uart_write_string:
     ldy     #$00
 @loop:      
-    lda     (zp_string_buffer), y
+    lda     (ZP_STRING_BUFFER), y
     beq     @end
 
     sta     ACIA_DATA
@@ -201,8 +201,8 @@ acia_irq:
 
     jsr     _uart_read_byte
 
-    ldx     ib_base
-    sta     ib_base, x
+    ldx     IB_BASE
+    sta     IB_BASE, x
 
     cmp     #$0D                ;   CR?
     beq     @CR
@@ -217,7 +217,7 @@ acia_irq:
     jsr     _uart_write_byte
     ldx     #$00
 @end:
-    stx     ib_idx
+    stx     IB_IDX
     plx
     pla
 
