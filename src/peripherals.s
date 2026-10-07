@@ -16,15 +16,16 @@ _peripherals_config:
     ;       ACIA CONFIGURATION
     ;       ==================
     stz     ACIA_STATUS         ;   soft reset
-    lda     #$1F
+    lda     #$10
     sta     ACIA_CONTROL
     lda     #$09
     sta     ACIA_COMMAND
 
     ldx     #$FF                ;
-@b0:                                    ;
+@b0:                            ;
     lda     #$FF                ;
-@b1:        dec                         ;   delay scurt pentru LCD
+@b1:                            ;   Short delay for LCD power up
+    dec                         ;
     bne     @b1                 ;
     dex                         ;
     bne     @b0                 ;
@@ -49,7 +50,8 @@ _peripherals_config:
     rts
 
 .export     _lcd_delay
-_lcd_delay:   pha
+_lcd_delay:   
+    pha
     lda     #$30
 @loop:
     dec
@@ -73,7 +75,7 @@ _lcd_command:
     sta     $00
     and     #$F0
     ora     #$08
-    sta     VIA_PORTB
+    ;sta     VIA_PORTB
 
     jsr     _lcd_delay
 
@@ -89,16 +91,15 @@ _lcd_command:
     rol
     and     #$F0
     ora     #$08
-    sta     VIA_PORTB
+    ;sta     VIA_PORTB
 
     jsr     _lcd_delay
 
     and     #$F0
-    sta     VIA_PORTB
+    ;sta     VIA_PORTB
 
     jsr     _lcd_delay
 
-    pla
     rts
 
 .export _lcd_write_char

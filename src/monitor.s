@@ -4,8 +4,8 @@
 .rodata
 _msg_monitor_init:   .asciiz "  MEMORY MONITOR"
 
-MEM_SRC = $F0
-MEM_DST = $F2
+MEM_SRC = $2000
+MEM_DST = $2002
 
 .code
 .export monitor_init

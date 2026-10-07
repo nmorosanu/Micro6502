@@ -6,4 +6,3 @@ _msg_lose:   .asciiz "You lost!"
 .code
 .export minesweeper_init
 minesweeper_init:
-    rts

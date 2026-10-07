@@ -6,30 +6,39 @@
 
 .rodata
 .code
-
 .export NMI
 NMI:
     rti
 
 .export RESET
 RESET:      
-    sei                                 ;
-    ldx     #$FF                        ;
-    txs                                 ;   init stack and peripherals
-    cld                                 ;
+    sei
+    ldx     #$FF
+    txs
+    cld
+
     jsr     _peripherals_config         ;
-    jsr     ram_clear
-    cli                                 ;
 
-    stz     $00 + $50
+;    stz     $00                         ;
+;    lda     #$10                        ;
+;    sta     $01                         ;
+;    lda     #$A5                        ;
+;@ram_clear_loop:                        ;   Reset RAM
+;    sta     ($00)                       ;   (writes xA5 in all of the systems RAM locations)
+;    inc     $00                         ;
+;    bne     @loop                       ;
+;    inc     $01                         ;
+;    ldx     $01                         ;
+;    cpx     #$80                        ;
+;    bne     @ram_clear_loop             ;
 
-    lda     #'g'
-    sta     IB_BASE
+    cli
 
-@loop:
-    bbr0    $00 + $50, @loop
+halt:
+    bra     halt
 
-@ib_parse:
+.export ib_parse
+ib_parse:
     lda     IB_BASE
 
     cmp     #'p'
@@ -38,7 +47,7 @@ RESET:
     beq     @monitor
     cmp     #'g'
     beq     @games
-    bra     @loop
+    bra     halt
 
 @program:   jmp     program
 @monitor:   jmp     monitor
@@ -112,27 +121,9 @@ brk_irq:
     pla
     rts
 
-ram_clear:
-    lda     #$10
-    sta     $00 + 1
-    lda     #$00
-    sta     $00 
-
-    lda     #$00
-@loop:
-    sta     ($00)
-    inc     $00 
-    bne     @loop
-
-    inc     $00 + 1
-    ldx     $00 + 1
-    cpx     #$80
-    bne     @loop
-
-    rts
 
 ;   disabled while debugging with sim65
-;.segment "VECTORS"
-;.word NMI
-;.word RESET
-;.word IRQ
+.segment "VECTORS"
+.word NMI
+.word RESET
+.word IRQ

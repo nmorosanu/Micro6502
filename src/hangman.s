@@ -8,7 +8,7 @@ _msg_hangman_lives:  .asciiz "  Lives: "
 
 _msg_hangman_win:    .asciiz "  You win!"
 
-_msg_hangman_lose:   .asciiz "  You lose. The word was "
+_msg_hangman_lose:   .asciiz "  You lost. The word was "
 
 words:  .asciiz "PROCESSOR"
         .asciiz "PARTICLE"
@@ -19,11 +19,10 @@ words:  .asciiz "PROCESSOR"
         .asciiz "GALAXY"
         .asciiz "ARCHITECTURE"
 
-
-SEED            = $00F0
-WORD_POINTER    = $00F1
-STRING_POINTER  = $00F3
-LIVES           = $00F4
+SEED            = $2000
+WORD_POINTER    = $2001
+STRING_POINTER  = $2003
+LIVES           = $2004
 
 .code
 .export hangman_init
