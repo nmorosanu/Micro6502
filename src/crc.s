@@ -9,13 +9,10 @@ crc16clc:
     sta     CRC                     ;
     sta     CRC + 1                 ;   CRC = xFFFF
     
-    lda     CRC_LENGTH
-    ora     CRC_LENGTH + 1
-    beq     @end
-    
     ldy     #$00
 @loop_bytes:
     lda     (ZP_STRING_BUFFER), y
+    beq     @end
     eor     CRC
     sta     CRC
 
@@ -24,29 +21,21 @@ crc16clc:
     lsr     CRC + 1                 ;
     ror     CRC                     ;   Check if LSB is set
     bcc     @skip_xor
-
-    lda     CRC + 1
-    eor     #$A0
-    sta     CRC + 1
-    lda     CRC
-    eor     #$01
-    sta     CRC
+@xor:
+    lda     CRC                     ;
+    eor     #$01                    ;   XOR low byte
+    sta     CRC                     ;
+    lda     CRC + 1                 ;
+    eor     #$A0                    ;   XOR high byte
+    sta     CRC + 1                 ;
 @skip_xor:
     dex
     bne     @loop_bits
-
-    inc     ZP_STRING_BUFFER
-    bne     @decrement_page
-    inc     ZP_STRING_BUFFER + 1
-@decrement_page:
-    lda     CRC_LENGTH
-    bne     @decrement_length
-    dec     CRC_LENGTH + 1
-@decrement_length:
-    lda     CRC_LENGTH
-    dec
-    ora     CRC_LENGTH + 1
+    
+    iny
     bne     @loop_bytes
+    inc     ZP_STRING_BUFFER + 1
+    bra     @loop_bytes
 @end:
     rts
 

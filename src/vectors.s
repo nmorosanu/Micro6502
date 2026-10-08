@@ -3,8 +3,11 @@
 .include    "./inc/games.inc"
 .include    "./inc/monitor.inc"
 .include    "./inc/program.inc"
+.include    "./inc/crc.inc"
 
 .rodata
+str: .asciiz "abcdefghijklmn"
+
 .code
 .export NMI
 NMI:
@@ -17,22 +20,19 @@ RESET:
     txs
     cld
 
-    jsr     _peripherals_config         ;
-
-;    stz     $00                         ;
-;    lda     #$10                        ;
-;    sta     $01                         ;
-;    lda     #$A5                        ;
-;@ram_clear_loop:                        ;   Reset RAM
-;    sta     ($00)                       ;   (writes xA5 in all of the systems RAM locations)
-;    inc     $00                         ;
-;    bne     @loop                       ;
-;    inc     $01                         ;
-;    ldx     $01                         ;
-;    cpx     #$80                        ;
-;    bne     @ram_clear_loop             ;
+    jsr     _peripherals_config
 
     cli
+    lda     #<str   
+    sta     ZP_STRING_BUFFER
+    lda     #>str   
+    sta     ZP_STRING_BUFFER + 1
+
+    jsr     crc16clc                     ; xA8E1
+    lda     CRC
+    ldx     CRC + 1
+
+    stp
 
 halt:
     bra     halt
@@ -124,6 +124,6 @@ brk_irq:
 
 ;   disabled while debugging with sim65
 .segment "VECTORS"
-.word NMI
-.word RESET
-.word IRQ
+;.word NMI
+;.word RESET
+;.word IRQ
