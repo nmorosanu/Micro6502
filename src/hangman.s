@@ -25,8 +25,8 @@ STRING_POINTER  = $2003
 LIVES           = $2004
 
 .code
-.export hangman_init
-hangman_init:
+.export _hangman_init
+_hangman_init:
     lda     #<_msg_hangman_init
     sta     ZP_STRING_BUFFER
     lda     #>_msg_hangman_init
@@ -54,4 +54,4 @@ draw_frame:
     lda     IB_BASE
     ldx     IB_IDX
 
-    bra     hangman_init
+    bra     _hangman_init

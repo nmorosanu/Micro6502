@@ -1,20 +1,53 @@
 .include "inc/memory.inc"
 .include "inc/peripherals.inc"
 
-.rodata
 .code
-.export crc16clc
-crc16clc:
+
+.export _rng
+_rng:
+    lda     PRNG_SEED
+    tax
+    
+    asl
+    eor     PRNG_SEED
+    asl
+    eor     PRNG_SEED
+    asl
+    eor     PRNG_SEED
+    asl
+    eor     PRNG_SEED
+    asl
+    eor     PRNG_SEED
+    asl
+    eor     PRNG_SEED
+    asl
+    eor     PRNG_SEED
+    asl
+    eor     PRNG_SEED
+
+    sta     PRNG_SEED
+
+@mod:
+    sec
+@modloop:
+    sbc     #$20
+    bcs     @modloop
+    
+    adc     #$20
+    rts
+
+.export _crc16clc
+_crc16clc:
     lda     #$FF                    ;
     sta     CRC                     ;
     sta     CRC + 1                 ;   CRC = xFFFF
     
     ldy     #$00
 @loop_bytes:
-    lda     (ZP_STRING_BUFFER), y
-    beq     @end
-    eor     CRC
-    sta     CRC
+    lda     (ZP_STRING_BUFFER), y   ;
+    beq     @end                    ;   XOR byte and store
+    eor     CRC                     ;   the result
+    sta     CRC                     ;
 
     ldx     #$08
 @loop_bits:
@@ -39,8 +72,8 @@ crc16clc:
 @end:
     rts
 
-.export crc16cmp
-crc16cmp:
+.export _crc16cmp
+_crc16cmp:
 @lbyte:
     lda     CRC
     cmp     CRC_COMPARE

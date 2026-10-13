@@ -4,5 +4,5 @@ _msg_win:    .asciiz "You win!"
 _msg_lose:   .asciiz "You lost!"
 
 .code
-.export minesweeper_init
-minesweeper_init:
+.export _minesweeper_init
+_minesweeper_init:

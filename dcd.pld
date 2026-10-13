@@ -9,6 +9,6 @@ A4  RWB CLK WERAM   OERAM   CERAM   CEVIA   CEACIA  CEROM   NC NC VCC
 /CERAM  = /A15
 /CEACIA = A15 * /A14 * /A13 * /A12 * /A11 * /A10 * /A9 * /A8 * /A7 * /A6 * /A5 * /A4
 /CEVIA  = A15 * /A14 * /A13 * /A12 * /A11 * /A10 * /A9 * /A8 * /A7 * /A6 * /A5 * A4
-/CEROM  = RWB * A15 * A14 + RWB * A15 * A13 + RWB * A15 * A12 + RWB * A15 * A11 + RWB * A15 * A10 + RWB * A15 * A9 + RWB * A15 * A8 + RWB * A15 * A7 + RWB * A15 * A6
+/CEROM  = CLK * RWB * A15 * A14 + CLK * RWB * A15 * A13 + CLK * RWB * A15 * A12 + CLK * RWB * A15 * A11 + CLK * RWB * A15 * A10 + CLK * RWB * A15 * A9 + CLK * RWB * A15 * A8 + CLK * RWB * A15 * A7 + CLK * RWB * A15 * A6
 
 DESCRIPTION

@@ -1,5 +1,5 @@
 .rodata
 .code
 
-.export program_init
-program_init:
+.export _program_init
+_program_init:

@@ -20,6 +20,10 @@ ASM_OBJS	 =	$(patsubst $(DIR_SRC)/%.s,$(DIR_OBJ)/%.s.o,$(ASM_SRCS))
 OBJS		 =	$(C_OBJS) \
 				$(ASM_OBJS)
 
+DCD			 =  dcd
+DCD_PLD		 = 	$(DCD).pld
+DCD_JED		 = 	$(DCD).jed
+
 FIRMWARE	 = 	firmware.bin
 FIRMWARE_SIM =	simulation.bin
 
@@ -55,6 +59,11 @@ prg:  $(FIRMWARE)
 ru:	$(FIRMWARE)
 	@echo "[Programming EEPROM]"
 	minipro -p AT28C256 -w $(DIR_BIN)/$(FIRMWARE) -u
+
+.PHONY: pldu
+pldu: $(DCD_PLD)
+	galette -pfc $(DCD_PLD)
+	minipro -p ATF22V10 -w $(DCD_JED)
 
 .PHONY: rd
 rd:

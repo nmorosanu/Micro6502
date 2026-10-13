@@ -49,14 +49,32 @@ _peripherals_config:
 
     rts
 
+;.export     _lcd_delay
+;_lcd_delay:   
+;    pha
+;    lda     #$30
+;@loop:
+;    dec
+;    bne     @loop
+;
+;    pla
+;    rts
+
 .export     _lcd_delay
 _lcd_delay:   
     pha
-    lda     #$30
-@loop:
+    phx
+    
+    lda     #$FF
+@repeat:
+    ldx     #$FF
+@dx:
+    dex
+    bne     @dx
     dec
-    bne     @loop
+    bne     @repeat
 
+    plx
     pla
     rts
 

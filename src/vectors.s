@@ -3,10 +3,9 @@
 .include    "./inc/games.inc"
 .include    "./inc/monitor.inc"
 .include    "./inc/program.inc"
-.include    "./inc/crc.inc"
+.include    "./inc/utils.inc"
 
 .rodata
-str: .asciiz "abcdefghijklmn"
 
 .code
 .export NMI
@@ -19,20 +18,11 @@ RESET:
     ldx     #$FF
     txs
     cld
+    
+    lda     #$A5
+    sta     PRNG_SEED
 
-    jsr     _peripherals_config
-
-    cli
-    lda     #<str   
-    sta     ZP_STRING_BUFFER
-    lda     #>str   
-    sta     ZP_STRING_BUFFER + 1
-
-    jsr     crc16clc                     ; xA8E1
-    lda     CRC
-    ldx     CRC + 1
-
-    stp
+    ;jsr     _peripherals_config
 
 halt:
     bra     halt
@@ -56,14 +46,14 @@ ib_parse:
 program:
     ldx     #$FF
     txs
-    jmp     program_init
+    jmp     _program_init
 @hang:
     bra     @hang
 
 monitor:
     ldx     #$FF
     txs
-    jmp     monitor_init
+    jmp     _monitor_init
 @hang:
     bra     @hang
 
@@ -79,9 +69,9 @@ games:
     beq     @hangman
     bra     @hang
 @minesweeper:
-    jmp     minesweeper_init
+    jmp     _minesweeper_init
 @hangman:
-    jmp     hangman_init
+    jmp     _hangman_init
 @hang:
     bra     @hang
 
@@ -99,8 +89,6 @@ IRQ:
     bmi     @acia
     lda     VIA_IFR
     bmi     @via
-
-    bra     @end
 @brk:
     jsr     brk_irq
     bra     @end

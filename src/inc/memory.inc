@@ -9,12 +9,12 @@
 ;   STIVA HARDWARE             [$0100 - $01FF]
 
 ;   VARIABILE DE SISTEM        [$0200 - $0FFF]
-.define IB_BASE                 $0200   ;   inceputul input buffer-ului
-.define IB_IDX                  $02FF   ;   indicator pentru pozitia din ib_base
-.define IRQ_STATUS              $0300   ;   byte care retine ultimul registru citit dintr-un irq status
-.define CRC                     $0300   ;   crc16 rezultat dupa calcul
-.define CRC_LENGTH              $0302   ;   crc16 lungime
-.define CRC_COMPARE             $0304   ;   crc16 de comparat
+.define IB_BASE                 $0200   ;   input buffer ($0200 - $02FF)
+.define IB_IDX                  $02FF   ;   ib_base current position
+.define IRQ_STATUS              $0300   ;   last IRQ status byte
+.define CRC                     $0300   ;   crc16 result
+.define CRC_COMPARE             $0302   ;   crc16 to compare with
+.define PRNG_SEED               $0304   ;   seed for the rng
 
 ;   STIVA SOFTWARE (REZERVATA) [$1000 - $1FFF]
 ;   MEMORIE DE PROGRAM         [$2000 - $7FFF]
