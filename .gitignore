@@ -1,5 +1,9 @@
-*.core
-*.out
+*.chp
+*.fus
+*.jed
+*.pin
 *.o
+*.out
+*.core
 build/
 debug/
