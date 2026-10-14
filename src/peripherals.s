@@ -187,9 +187,9 @@ _uart_read_byte:
 _uart_write_byte:   
     sta     ACIA_DATA
     pha
-    lda     #$FF                    ;
-@b0:                                ;   artificial delay to counter the WDC65C51 hardware bug
-    dec                             ;
+    lda     #$FF
+@b0:
+    dec
     bne     @b0
     pla
     rts
@@ -202,9 +202,9 @@ _uart_write_string:
     beq     @end
 
     sta     ACIA_DATA
-    lda     #$FF                    ;
-@b0:                                ;   artificial delay to counter the WDC65C51 hardware bug
-    dec                             ;
+    lda     #$FF
+@b0:
+    dec
     bne     @b0
     iny
 
@@ -231,6 +231,7 @@ acia_irq:
     bra     @end
 
 @CR:
+    stz     IB_READY
     jsr     _uart_write_byte
     lda     #$0A
     jsr     _uart_write_byte

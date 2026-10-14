@@ -19,10 +19,11 @@ RESET:
     txs
     cld
     
-    lda     #$A5
+    lda     #$AA
     sta     PRNG_SEED
 
     ;jsr     _peripherals_config
+    jmp     _hangman_init
 
 halt:
     bra     halt
