@@ -63,7 +63,7 @@ ru:	$(FIRMWARE)
 .PHONY: pldu
 pldu: $(DCD_PLD)
 	galette -pfc $(DCD_PLD)
-	minipro -p ATF22V10 -w $(DCD_JED)
+	minipro -p ATF22V10C -w $(DCD_JED)
 
 .PHONY: rd
 rd:

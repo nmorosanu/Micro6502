@@ -10,12 +10,13 @@
 
 ;   VARIABILE DE SISTEM        [$0200 - $0FFF]
 .define IB_BASE                 $0200   ;   input buffer ($0200 - $02FF)
-.define IB_IDX                  $02FF   ;   ib_base current position
-.define IB_READY                $0300   ;   status byte to check wether input buffer is meant to be read
-.define IRQ_STATUS              $0301   ;   last IRQ status byte
-.define CRC                     $0302   ;   crc16 result
-.define CRC_COMPARE             $0304   ;   crc16 to compare with
-.define PRNG_SEED               $0306   ;   seed for the random number generator
+.define IB_IDX                  $0300   ;   ib_base current position
+.define IB_IDX_TMP              $0301   ;   ib_base current position
+.define IB_READY                $0302   ;   status byte to check wether input buffer is meant to be read
+.define IRQ_STATUS              $0303   ;   last IRQ status byte
+.define CRC                     $0304   ;   crc16 result
+.define CRC_COMPARE             $0306   ;   crc16 to compare with
+.define PRNG_SEED               $0308   ;   seed for the random number generator
 
 ;   STIVA SOFTWARE (REZERVATA) [$1000 - $1FFF]
 ;   MEMORIE DE PROGRAM         [$2000 - $7FFF]

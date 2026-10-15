@@ -5,8 +5,6 @@
 .include    "./inc/program.inc"
 .include    "./inc/utils.inc"
 
-.rodata
-
 .code
 .export NMI
 NMI:
@@ -21,70 +19,59 @@ RESET:
     
     lda     #$AA
     sta     PRNG_SEED
+    stx     IB_READY
 
-    ;jsr     _peripherals_config
-    jmp     _hangman_init
+    dex
+    stx     VIA_PORTA
+    stx     VIA_PORTB
 
-halt:
-    bra     halt
+    jsr     _peripherals_config
 
-.export ib_parse
-ib_parse:
+    cli
+
+mainloop:
+    lda     IB_READY
+    beq     @parse
+    bra     mainloop
+@parse:
+    ldx     #$FF                            ;
+    txs                                     ;   reset stack for the loaded mode
+
     lda     IB_BASE
+    cmp     #'p'                            ;   if first char is p
+    beq     @program                        ;   launch program mode
+    cmp     #'m'                            ;   if first char is m,
+    beq     @monitor                        ;   launch memory monitor
+    cmp     #'g'                            ;   if first char is g,
+    beq     @games                          ;   check for games
 
-    cmp     #'p'
-    beq     @program
-    cmp     #'m'
-    beq     @monitor
-    cmp     #'g'
-    beq     @games
-    bra     halt
+    dec     IB_READY                        ;   nothing matched,
+    bra     mainloop                        ;   return to mainloop
 
-@program:   jmp     program
-@monitor:   jmp     monitor
-@games:     jmp     games
-
-program:
-    ldx     #$FF
-    txs
+@program:
     jmp     _program_init
-@hang:
-    bra     @hang
 
-monitor:
-    ldx     #$FF
-    txs
+@monitor:
     jmp     _monitor_init
-@hang:
-    bra     @hang
 
-games:
-    ldx     #$FF
-    txs
+@games:                                     ;
+    lda     IB_BASE + 1                     ;   retrieve next byte
+    cmp     #'h'                            ;   if char is h,
+    beq     @hangman                        ;   launch hangman
+    cmp     #'m'                            ;   if char is m
+    beq     @minesweeper                    ;   launch minesweeper
 
-    ldx     #$01
-    lda     IB_BASE, x
-    cmp     #'m'
-    beq     @minesweeper
-    cmp     #'h'
-    beq     @hangman
-    bra     @hang
-@minesweeper:
-    jmp     _minesweeper_init
+    dec     IB_READY                        ;   nothing matched,
+    bra     mainloop                        ;   return to mainloop
 @hangman:
     jmp     _hangman_init
-@hang:
-    bra     @hang
+@minesweeper:
+    jmp     _minesweeper_init
 
 .export IRQ
 IRQ:
     pha
     phx
-
-    tsx
-    lda     $0103, x
-    bit     #$10
-    beq     @brk
 
     lda     ACIA_STATUS
     bmi     @acia
@@ -106,13 +93,11 @@ IRQ:
     rti
 
 brk_irq:
-    pha
-    pla
     rts
 
 
 ;   disabled while debugging with sim65
 .segment "VECTORS"
-;.word NMI
-;.word RESET
-;.word IRQ
+.word NMI
+.word RESET
+.word IRQ

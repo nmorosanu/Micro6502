@@ -8,74 +8,50 @@ _peripherals_config:
     ;       =================
     lda     #$FF
     sta     VIA_DDRA            ;
-    stz     VIA_PORTA           ;
-    sta     VIA_DDRB            ;   PORTA = PORTB = x00
+    sta     VIA_DDRB            ;   PORTA = 0x00    (OUTPUT)
+    stz     VIA_PORTA           ;   PORTB = 0x00    (OUTPUT)
     stz     VIA_PORTB           ;
 
     ;       ==================
     ;       ACIA CONFIGURATION
     ;       ==================
     stz     ACIA_STATUS         ;   soft reset
-    lda     #$10
-    sta     ACIA_CONTROL
-    lda     #$09
-    sta     ACIA_COMMAND
 
-    ldx     #$FF                ;
-@b0:                            ;
-    lda     #$FF                ;
-@b1:                            ;   Short delay for LCD power up
-    dec                         ;
-    bne     @b1                 ;
-    dex                         ;
-    bne     @b0                 ;
+    lda     #$10                ;
+    sta     ACIA_CONTROL        ;   1 stop bit, 8-bit word, 19200bps
 
-    lda     #$02                ;
-    jsr     _lcd_command        ;
+    lda     #$09                ;
+    sta     ACIA_COMMAND        ;   
 
-    lda     #$28                ;
-    jsr     _lcd_command        ;
-
-    lda     #$06                ;
-    jsr     _lcd_command        ;
-
-    lda     #$0C                ;
-    jsr     _lcd_command        ;
-
-    lda     #$01                ;
-    jsr     _lcd_command        ;
-    lda     #$80                ;
-    jsr     _lcd_command        ;   CLEAR
+    ;       ==================
+    ;       LCD INITIALIZATION
+    ;       ==================
+    ;jsr     _lcd_delay
+    ;lda     #$33                ;
+    ;jsr     _lcd_command        ;
+    ;lda     #$32                ;
+    ;jsr     _lcd_command        ;
+    ;lda     #$28                ;
+    ;jsr     _lcd_command        ;
+    ;lda     #$0C                ;
+    ;jsr     _lcd_command        ;
+    ;lda     #$06                ;
+    ;jsr     _lcd_command        ;
+    ;lda     #$01                ;
+    ;jsr     _lcd_command        ;
+    ;lda     #$80                ;
+    ;jsr     _lcd_command        ;
 
     rts
 
-;.export     _lcd_delay
-;_lcd_delay:   
-;    pha
-;    lda     #$30
-;@loop:
-;    dec
-;    bne     @loop
-;
-;    pla
-;    rts
-
 .export     _lcd_delay
 _lcd_delay:   
-    pha
     phx
-    
-    lda     #$FF
-@repeat:
     ldx     #$FF
 @dx:
     dex
     bne     @dx
-    dec
-    bne     @repeat
-
     plx
-    pla
     rts
 
 .export _lcd_clear
@@ -93,7 +69,7 @@ _lcd_command:
     sta     $00
     and     #$F0
     ora     #$08
-    ;sta     VIA_PORTB
+    sta     VIA_PORTB
 
     jsr     _lcd_delay
 
@@ -109,12 +85,12 @@ _lcd_command:
     rol
     and     #$F0
     ora     #$08
-    ;sta     VIA_PORTB
+    sta     VIA_PORTB
 
     jsr     _lcd_delay
 
     and     #$F0
-    ;sta     VIA_PORTB
+    sta     VIA_PORTB
 
     jsr     _lcd_delay
 
@@ -155,8 +131,6 @@ _lcd_write_char:
 
 .export _lcd_write_string
 _lcd_write_string:  
-    sta     ZP_STRING_BUFFER
-    sty     ZP_STRING_BUFFER + 1
     ldy     #$00
 @loop:      lda     (ZP_STRING_BUFFER), y
     beq     @end
@@ -167,8 +141,6 @@ _lcd_write_string:
     bra     @loop
 
 @end:       
-    lda     ZP_STRING_BUFFER
-    ldy     ZP_STRING_BUFFER + 1
     rts
 
 .export _uart_read_byte
@@ -215,31 +187,51 @@ _uart_write_string:
 
 .export     acia_irq
 acia_irq:   
-    pha
-    phx
+    lda     #$FF
+    sta     VIA_PORTA
+    sta     VIA_PORTB
 
-    jsr     _uart_read_byte
+@poll:                                  ;
+    lda     ACIA_STATUS                 ;
+    bit     #$08                        ;   Poll until the byte can be read
+    beq     @poll                       ;
+    lda     ACIA_DATA                   ;
 
-    ldx     IB_BASE
+    ldx     IB_IDX
     sta     IB_BASE, x
 
-    cmp     #$0D                ;   CR?
-    beq     @CR
+    cmp     #$0D                        ;
+    beq     @CR                         ;   CR?
 
-    jsr     _uart_write_byte
-    inx
-    bra     @end
+    cmp     #$7F                        ;
+    beq     @DEL                        ;
+    cmp     #$08                        ;   DEL or BS?
+    beq     @DEL                        ;
 
-@CR:
-    stz     IB_READY
-    jsr     _uart_write_byte
-    lda     #$0A
-    jsr     _uart_write_byte
-    ldx     #$00
+    jsr     _uart_write_byte            ;
+    inx                                 ;
+    bra     @end                        ;
+
+@CR:                                    ;
+    stz     IB_READY                    ;
+    jsr     _uart_write_byte            ;   Input buffer can be read by the running program
+    lda     #$0A                        ;   
+    jsr     _uart_write_byte            ;
+    stx     IB_IDX_TMP                  ;   Store the current index for later use
+    ldx     #$00                        ;   Reset the input buffer index
+@DEL:
+    txa                                 ;
+    beq     @end                        ;   check if input buffer is already zero
+    dex                                 ;
+
+    lda     #$08                        ;
+    jsr     _uart_write_byte            ;   send backspace
+    lda     #$20                        ;
+    jsr     _uart_write_byte            ;   send space
+    lda     #$08                        ;
+    jsr     _uart_write_byte            ;   send backspace
 @end:
     stx     IB_IDX
-    plx
-    pla
 
     rts
 

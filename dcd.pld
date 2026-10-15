@@ -2,7 +2,7 @@ GAL22V10
 Decodarea adreselor de memorie
 
 A15 A14 A13 A12     A11     A10     A9      A8      A7      A6 A5 GND
-A4  RWB CLK WERAM   OERAM   CERAM   CEVIA   CEACIA  CEROM   NC NC VCC
+A4  RWB CLK WERAM   OERAM   CERAM   CEVIA   CEACIA  CEROM   CEEX0 CEEX1 VCC
 
 /WERAM  = /A15 * /RWB * CLK
 /OERAM  = /A15 * RWB * CLK
@@ -10,5 +10,7 @@ A4  RWB CLK WERAM   OERAM   CERAM   CEVIA   CEACIA  CEROM   NC NC VCC
 /CEACIA = A15 * /A14 * /A13 * /A12 * /A11 * /A10 * /A9 * /A8 * /A7 * /A6 * /A5 * /A4
 /CEVIA  = A15 * /A14 * /A13 * /A12 * /A11 * /A10 * /A9 * /A8 * /A7 * /A6 * /A5 * A4
 /CEROM  = CLK * RWB * A15 * A14 + CLK * RWB * A15 * A13 + CLK * RWB * A15 * A12 + CLK * RWB * A15 * A11 + CLK * RWB * A15 * A10 + CLK * RWB * A15 * A9 + CLK * RWB * A15 * A8 + CLK * RWB * A15 * A7 + CLK * RWB * A15 * A6
+/CEEX0  = CLK * RWB * A15 * /A14 * /A13 * /A12 * /A11 * /A10 * /A9 * /A8 * /A7 * /A6 * A5 * /A4
+/CEEX1  = CLK * RWB * A15 * /A14 * /A13 * /A12 * /A11 * /A10 * /A9 * /A8 * /A7 * /A6 * A5 * A4
 
 DESCRIPTION

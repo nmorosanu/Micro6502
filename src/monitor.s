@@ -13,7 +13,7 @@ _monitor_init:
     lda     #<_msg_monitor_init
     ldy     #>_msg_monitor_init
     jsr     _uart_write_string
-@ib_parse:
-    bra     @ib_parse
+@loop:
+    bra     @loop
     
 
