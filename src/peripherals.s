@@ -1,8 +1,17 @@
+;
+;   File:           peripherals.s
+;   Description:    A collection of subroutines for managing the system's peripherals 
+;   Author:         Morosanu Nicolas
+;   Created:        29.10.2026
+;   Modified:       29.10.2026
+;   Version:        0.0.1
+;   
+
 .include    "./inc/memory.inc"
 
 .code
-.export _peripherals_config
-_peripherals_config:
+.export func_peripherals_config
+func_peripherals_config:
     ;       =================
     ;       VIA CONFIGURATION
     ;       =================
@@ -26,57 +35,60 @@ _peripherals_config:
     ;       ==================
     ;       LCD INITIALIZATION
     ;       ==================
-    ;jsr     _lcd_delay
-    ;lda     #$33                ;
-    ;jsr     _lcd_command        ;
-    ;lda     #$32                ;
-    ;jsr     _lcd_command        ;
-    ;lda     #$28                ;
-    ;jsr     _lcd_command        ;
-    ;lda     #$0C                ;
-    ;jsr     _lcd_command        ;
-    ;lda     #$06                ;
-    ;jsr     _lcd_command        ;
-    ;lda     #$01                ;
-    ;jsr     _lcd_command        ;
-    ;lda     #$80                ;
-    ;jsr     _lcd_command        ;
+    ;jsr     _lcd_init
 
     rts
 
-.export     _lcd_delay
-_lcd_delay:   
-    phx
+.export func_lcd_init
+func_lcd_init:
+    jsr     func_lcd_delay
+    lda     #$33                    ;
+    jsr     func_lcd_command        ;
+    lda     #$32                    ;
+    jsr     func_lcd_command        ;
+    lda     #$28                    ;
+    jsr     func_lcd_command        ;
+    lda     #$0C                    ;
+    jsr     func_lcd_command        ;
+    lda     #$06                    ;
+    jsr     func_lcd_command        ;
+    lda     #$01                    ;
+    jsr     func_lcd_command        ;
+    lda     #$80                    ;
+    jsr     func_lcd_command        ;
+    rts
+
+.export     func_lcd_delay
+func_lcd_delay:   
     ldx     #$FF
 @dx:
     dex
     bne     @dx
-    plx
     rts
 
-.export _lcd_clear
-_lcd_clear:
+.export func_lcd_clear
+func_lcd_clear:
     pha
     lda     #$01
-    jsr     _lcd_command
+    jsr     func_lcd_command
     lda     #$80
-    jsr     _lcd_command
+    jsr     func_lcd_command
     pla
     rts
 
-.export _lcd_command
-_lcd_command:
+.export func_lcd_command
+func_lcd_command:
     sta     $00
     and     #$F0
     ora     #$08
     sta     VIA_PORTB
 
-    jsr     _lcd_delay
+    jsr     func_lcd_delay
 
     and     #$F0
     sta     VIA_PORTB
 
-    jsr     _lcd_delay
+    jsr     func_lcd_delay
 
     lda     $00
     rol
@@ -87,28 +99,28 @@ _lcd_command:
     ora     #$08
     sta     VIA_PORTB
 
-    jsr     _lcd_delay
+    jsr     func_lcd_delay
 
     and     #$F0
     sta     VIA_PORTB
 
-    jsr     _lcd_delay
+    jsr     func_lcd_delay
 
     rts
 
-.export _lcd_write_char
-_lcd_write_char:
+.export func_lcd_byte_write
+func_lcd_byte_write:
     sta     $00
     and     #$F0
     ora     #$0C
     sta     VIA_PORTB
 
-    jsr     _lcd_delay
+    jsr     func_lcd_delay
 
     and     #$F4
     sta     VIA_PORTB
 
-    jsr     _lcd_delay
+    jsr     func_lcd_delay
 
     lda     $00
     rol
@@ -119,23 +131,23 @@ _lcd_write_char:
     ora     #$0C
     sta     VIA_PORTB
 
-    jsr     _lcd_delay
+    jsr     func_lcd_delay
 
     and     #$F4
     sta     VIA_PORTB
 
-    jsr     _lcd_delay
+    jsr     func_lcd_delay
     lda     $00
 
     rts
 
-.export _lcd_write_string
-_lcd_write_string:  
+.export func_lcd_string_write
+func_lcd_string_write:  
     ldy     #$00
 @loop:      lda     (ZP_STRING_BUFFER), y
     beq     @end
 
-    jsr     _lcd_write_char
+    jsr     func_lcd_byte_write
     iny
 
     bra     @loop
@@ -143,8 +155,8 @@ _lcd_write_string:
 @end:       
     rts
 
-.export _uart_read_byte
-_uart_read_byte:
+.export func_uart_byte_read
+func_uart_byte_read:
     pha
 @poll:
     lda     ACIA_STATUS
@@ -155,8 +167,8 @@ _uart_read_byte:
 
     rts
 
-.export _uart_write_byte
-_uart_write_byte:   
+.export func_uart_byte_write
+func_uart_byte_write:   
     sta     ACIA_DATA
     pha
     lda     #$FF
@@ -166,8 +178,8 @@ _uart_write_byte:
     pla
     rts
 
-.export _uart_write_string
-_uart_write_string:
+.export func_uart_string_write
+func_uart_string_write:
     ldy     #$00
 @loop:      
     lda     (ZP_STRING_BUFFER), y
@@ -208,15 +220,15 @@ acia_irq:
     cmp     #$08                        ;   DEL or BS?
     beq     @DEL                        ;
 
-    jsr     _uart_write_byte            ;
+    jsr     func_uart_byte_write        ;
     inx                                 ;
     bra     @end                        ;
 
 @CR:                                    ;
     stz     IB_READY                    ;
-    jsr     _uart_write_byte            ;   Input buffer can be read by the running program
+    jsr     func_uart_byte_write            ;   Input buffer can be read by the running program
     lda     #$0A                        ;   
-    jsr     _uart_write_byte            ;
+    jsr     func_uart_byte_write            ;
     stx     IB_IDX_TMP                  ;   Store the current index for later use
     ldx     #$00                        ;   Reset the input buffer index
 @DEL:
@@ -225,11 +237,11 @@ acia_irq:
     dex                                 ;
 
     lda     #$08                        ;
-    jsr     _uart_write_byte            ;   send backspace
+    jsr     func_uart_byte_write            ;   send backspace
     lda     #$20                        ;
-    jsr     _uart_write_byte            ;   send space
+    jsr     func_uart_byte_write            ;   send space
     lda     #$08                        ;
-    jsr     _uart_write_byte            ;   send backspace
+    jsr     func_uart_byte_write            ;   send backspace
 @end:
     stx     IB_IDX
 

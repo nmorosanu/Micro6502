@@ -1,3 +1,12 @@
+;
+;   File:           vectors.s
+;   Description:    The NMI, RESET and IRQ vectors
+;   Author:         Morosanu Nicolas
+;   Created:        29.10.2026
+;   Modified:       29.10.2026
+;   Version:        0.0.1
+;   
+
 .include    "./inc/memory.inc"
 .include    "./inc/peripherals.inc"
 .include    "./inc/games.inc"
@@ -17,15 +26,12 @@ RESET:
     txs
     cld
     
-    lda     #$AA
-    sta     PRNG_SEED
     stx     IB_READY
 
-    dex
-    stx     VIA_PORTA
-    stx     VIA_PORTB
+    lda     #$AA
+    sta     PRNG_SEED
 
-    jsr     _peripherals_config
+    jsr     func_peripherals_config
 
     cli
 
@@ -35,34 +41,29 @@ mainloop:
     bra     mainloop
 @parse:
     ldx     #$FF                            ;
-    txs                                     ;   reset stack for the loaded mode
+    txs                                     ;   Reset stack for the loaded mode.
 
     lda     IB_BASE
-    cmp     #'p'                            ;   if first char is p
-    beq     @program                        ;   launch program mode
-    cmp     #'m'                            ;   if first char is m,
-    beq     @monitor                        ;   launch memory monitor
-    cmp     #'g'                            ;   if first char is g,
-    beq     @games                          ;   check for games
+    cmp     #'m'                            ;   If first char is m,
+    beq     @monitor                        ;   launch memory monitor.
+    cmp     #'g'                            ;   If first char is g,
+    beq     @games                          ;   check for games.
 
-    dec     IB_READY                        ;   nothing matched,
-    bra     mainloop                        ;   return to mainloop
-
-@program:
-    jmp     _program_init
+    dec     IB_READY                        ;   Nothing matched,
+    bra     mainloop                        ;   return to mainloop.
 
 @monitor:
     jmp     _monitor_init
 
 @games:                                     ;
-    lda     IB_BASE + 1                     ;   retrieve next byte
-    cmp     #'h'                            ;   if char is h,
-    beq     @hangman                        ;   launch hangman
-    cmp     #'m'                            ;   if char is m
-    beq     @minesweeper                    ;   launch minesweeper
+    lda     IB_BASE + 1                     ;   Retrieve next byte.
+    cmp     #'h'                            ;   If char is h,
+    beq     @hangman                        ;   launch hangman.
+    cmp     #'m'                            ;   If char is m
+    beq     @minesweeper                    ;   launch minesweeper.
 
-    dec     IB_READY                        ;   nothing matched,
-    bra     mainloop                        ;   return to mainloop
+    dec     IB_READY                        ;   Nothing matched,
+    bra     mainloop                        ;   return to mainloop.
 @hangman:
     jmp     _hangman_init
 @minesweeper:
@@ -98,6 +99,6 @@ brk_irq:
 
 ;   disabled while debugging with sim65
 .segment "VECTORS"
-.word NMI
-.word RESET
-.word IRQ
+;.word NMI
+;.word RESET
+;.word IRQ

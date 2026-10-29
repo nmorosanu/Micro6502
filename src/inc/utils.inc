@@ -1,8 +1,8 @@
 .ifndef __CRC_H__
 .define __CRC_H__ 1
 
-.import _crc16clc
-.import _crc16cmp
-.import _rng
+.import func_crc16modbus
+.import func_crc16modbus_cmp
+.import func_rng
 
 .endif

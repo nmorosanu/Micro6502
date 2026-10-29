@@ -1,3 +1,12 @@
+;
+;   File:           hangman.s
+;   Description:    Hangman game over UART.
+;   Author:         Morosanu Nicolas
+;   Created:        29.10.2026
+;   Modified:       29.10.2026
+;   Version:        0.0.1
+;   
+
 .include "inc/memory.inc"
 .include "inc/peripherals.inc"
 .include "inc/utils.inc"
@@ -71,7 +80,7 @@ _hangman_init:
     lda     #$05                            ;
     sta     LIVES                           ;   start with 5 lives
 
-    jsr     _rng                            ;   generate prng for using as index in wordlist
+    jsr     func_rng                        ;   generate prng for using as index in wordlist
 
     tax                                     ;
     lda     ARRAY_WORDS, X                  ;
@@ -123,7 +132,7 @@ _check_byte:
 @loop_word_hidden:
     lda     (WORD_POINTER), Y               ;
     beq     @end                            ;   if the current byte matches any byte from the chosen word,
-    cmp     TMP                             ;   show the character thats been chosen.
+    cmp     TMP                             ;   show the character that has been chosen.
     beq     @char_found                     ;
 
     iny

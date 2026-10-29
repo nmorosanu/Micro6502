@@ -1,15 +1,16 @@
 .ifndef     __PERIPHERALS_H__
 .define     __PERIPHERALS_H__
 
-.import     _peripherals_config
-.import     _lcd_delay
-.import     _lcd_clear
-.import     _lcd_command
-.import     _lcd_write_char
-.import     _lcd_write_string
-.import     _uart_read_byte
-.import     _uart_write_byte
-.import     _uart_write_string
+.import     func_peripherals_config
+.import     func_lcd_init
+.import     func_lcd_delay
+.import     func_lcd_clear
+.import     func_lcd_command
+.import     func_lcd_byte_write
+.import     func_lcd_string_write
+.import     func_uart_byte_read
+.import     func_uart_byte_write
+.import     func_uart_string_write
 .import     acia_irq
 .import     via_irq
 

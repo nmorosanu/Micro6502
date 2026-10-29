@@ -1,10 +1,19 @@
+;
+;   File:           utils.s
+;   Description:    Some subroutines which can be used in one or more submodules / programs
+;   Author:         Morosanu Nicolas
+;   Created:        29.10.2026
+;   Modified:       29.10.2026
+;   Version:        0.0.1
+;   
+
 .include "inc/memory.inc"
 .include "inc/peripherals.inc"
 
 .code
 
-.export _rng
-_rng:
+.export func_rng
+func_rng:
     lda     PRNG_SEED
     tax
     
@@ -36,8 +45,8 @@ _rng:
     adc     #$20
     rts
 
-.export _crc16clc
-_crc16clc:
+.export func_crc16_modbus
+func_crc16_modbus:
     lda     #$FF                    ;
     sta     CRC                     ;
     sta     CRC + 1                 ;   CRC = xFFFF
@@ -72,8 +81,8 @@ _crc16clc:
 @end:
     rts
 
-.export _crc16cmp
-_crc16cmp:
+.export func_crc16modbus_cmp
+func_crc16modbus_cmp:
 @lbyte:
     lda     CRC
     cmp     CRC_COMPARE
