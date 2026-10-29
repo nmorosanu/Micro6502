@@ -72,6 +72,9 @@ word_hidden_print:
 _hangman_init:
     stz     WORD_LENGTH
 
+    lda     #$20
+    sta     PRNG_VAL_MAX
+
     lda     #<word_hidden                   ;
     sta     WORD_HIDDEN_POINTER             ;
     lda     #>word_hidden                   ;

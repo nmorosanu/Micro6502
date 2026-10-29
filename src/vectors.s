@@ -27,9 +27,10 @@ RESET:
     cld
     
     stx     IB_READY
-
+    
     lda     #$AA
     sta     PRNG_SEED
+    sta     PRNG_VAL_MAX
 
     jsr     func_peripherals_config
 
@@ -59,15 +60,15 @@ mainloop:
     lda     IB_BASE + 1                     ;   Retrieve next byte.
     cmp     #'h'                            ;   If char is h,
     beq     @hangman                        ;   launch hangman.
-    cmp     #'m'                            ;   If char is m
-    beq     @minesweeper                    ;   launch minesweeper.
+    cmp     #'b'                            ;   If char is m
+    beq     @blackjack                      ;   launch blackjack.
 
     dec     IB_READY                        ;   Nothing matched,
     bra     mainloop                        ;   return to mainloop.
 @hangman:
     jmp     _hangman_init
-@minesweeper:
-    jmp     _minesweeper_init
+@blackjack:
+    jmp     _blackjack_init
 
 .export IRQ
 IRQ:

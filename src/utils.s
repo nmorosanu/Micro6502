@@ -33,16 +33,15 @@ func_rng:
     eor     PRNG_SEED
     asl
     eor     PRNG_SEED
-
     sta     PRNG_SEED
 
 @mod:
     sec
 @modloop:
-    sbc     #$20
+    sbc     PRNG_VAL_MAX
     bcs     @modloop
     
-    adc     #$20
+    adc     PRNG_VAL_MAX
     rts
 
 .export func_crc16_modbus

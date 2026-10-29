@@ -3,6 +3,7 @@
 
 ;   VARIABILE ZEROPAGE         [$0000 - 00FF]
 
+.define PRNG_VAL_MAX            $00FB   ;
 .define ZP_INPUT_BUFFER         $00FC   ;   $FC - $FD
 .define ZP_STRING_BUFFER        $00FE   ;   $FE - $FF
 
