@@ -18,6 +18,7 @@
 .define CRC                     $0304   ;   crc16 result
 .define CRC_COMPARE             $0306   ;   crc16 to compare with
 .define PRNG_SEED               $0308   ;   seed for the random number generator
+.define NUM2STR                 $0309   ;   $0309 - 030C
 
 ;   STIVA SOFTWARE (REZERVATA) [$1000 - $1FFF]
 ;   MEMORIE DE PROGRAM         [$2000 - $7FFF]

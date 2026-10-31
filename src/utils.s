@@ -3,7 +3,7 @@
 ;   Description:    Some subroutines which can be used in one or more submodules / programs
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
-;   Modified:       29.10.2026
+;   Modified:       31.10.2026
 ;   Version:        0.0.1
 ;   
 
@@ -11,9 +11,51 @@
 .include "inc/peripherals.inc"
 
 .code
+.export num2str
+num2str:
+    pha
+    phx
+    
+    ldx     #0
+@sute:
+    cmp     #100
+    bcc     @sute_end
+    sec
+    sbc     #100
+    inx
+    bra     @sute
 
-.export func_rng
-func_rng:
+@sute_end:
+    txa
+    clc
+    adc     #'0'
+    sta     NUM2STR                 ;   NUM2STR[0] = A / 100 % 10 + '0'
+
+    ldx     #0
+@zeci:
+    cmp     #10
+    bcc     @zeci_end
+    sec
+    sbc     #10
+    inx
+    bra     @zeci
+@zeci_end:
+    txa
+    clc
+    adc     #'0'
+    sta     NUM2STR + 1             ;   NUM2STR[1] = A / 10 % 10 + '0'
+
+    clc
+    adc     #'0'
+    sta     NUM2STR + 2             ;   NUM2STR[2] = A % 10 + '0'
+    stz     NUM2STR + 3             ;   NUM2STR[3] = '\0'
+
+    plx
+    pla
+    rts
+
+.export sys_prng
+sys_prng:
     lda     PRNG_SEED
     tax
     
@@ -44,8 +86,8 @@ func_rng:
     adc     PRNG_VAL_MAX
     rts
 
-.export func_crc16_modbus
-func_crc16_modbus:
+.export sys_crc16_modbus
+sys_crc16_modbus:
     lda     #$FF                    ;
     sta     CRC                     ;
     sta     CRC + 1                 ;   CRC = xFFFF
@@ -80,8 +122,8 @@ func_crc16_modbus:
 @end:
     rts
 
-.export func_crc16modbus_cmp
-func_crc16modbus_cmp:
+.export sys_crc16modbus_cmp
+sys_crc16modbus_cmp:
 @lbyte:
     lda     CRC
     cmp     CRC_COMPARE

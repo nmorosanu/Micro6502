@@ -3,7 +3,7 @@
 ;   Description:    The NMI, RESET and IRQ vectors
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
-;   Modified:       29.10.2026
+;   Modified:       31.10.2026
 ;   Version:        0.0.1
 ;   
 
@@ -27,7 +27,6 @@ RESET:
     cld
     
     stx     IB_READY
-    
     lda     #$AA
     sta     PRNG_SEED
     sta     PRNG_VAL_MAX
@@ -35,11 +34,10 @@ RESET:
     jsr     sys_peripherals_config
 
     cli
-
-mainloop:
+HOME:
     lda     IB_READY
     beq     @parse
-    bra     mainloop
+    bra     HOME
 @parse:
     ldx     #$FF                            ;
     txs                                     ;   Reset stack for the loaded mode.
@@ -51,7 +49,7 @@ mainloop:
     beq     @games                          ;   check for games.
 
     dec     IB_READY                        ;   Nothing matched,
-    bra     mainloop                        ;   return to mainloop.
+    bra     HOME                            ;   return.
 
 @monitor:
     jmp     _monitor_init
@@ -64,11 +62,13 @@ mainloop:
     beq     @blackjack                      ;   launch blackjack.
 
     dec     IB_READY                        ;   Nothing matched,
-    bra     mainloop                        ;   return to mainloop.
+    bra     HOME                            ;   return.
 @hangman:
-    jmp     _hangman_init
+    ;jmp     _hangman_init
+    bra     HOME
 @blackjack:
-    jmp     _blackjack_init
+    ;jmp     _blackjack_init
+    bra     HOME
 
 .export IRQ
 IRQ:
@@ -97,9 +97,9 @@ IRQ:
 brk_irq:
     rts
 
-
 ;   disabled while debugging with sim65
 .segment "VECTORS"
-;.word NMI
-;.word RESET
-;.word IRQ
+;.word   HOME
+;.word   NMI
+;.word   RESET
+;.word   IRQ

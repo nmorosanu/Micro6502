@@ -3,7 +3,7 @@
 ;   Description:    A collection of subroutines for managing the system's peripherals 
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
-;   Modified:       29.10.2026
+;   Modified:       31.10.2026
 ;   Version:        0.0.1
 ;   
 
