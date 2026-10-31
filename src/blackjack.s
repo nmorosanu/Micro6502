@@ -58,7 +58,7 @@ msg_tie:
 HAND_PLAYER     =   $00     ;   valoarea acumulata de jucator
 HAND_COMPUTER   =   $01     ;   valoarea acumulata de computer
 DRAWING_DONE    =   $02     ;   
-QUIT            =   $03     ;   semnaleaza dorinta de a opri jocul.
+QUIT            =   $03     ;   semnaleaza dorinta de a opri programul.
 TMP0            =   $04
 DECK_POS        =   $0A     ;   pozitia in pachetul de carti
 DECK_BASE       =   $7FCB   ;   ultimele 52 de pozitii din RAM sunt pachetul de carti
