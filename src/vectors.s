@@ -32,7 +32,7 @@ RESET:
     sta     PRNG_SEED
     sta     PRNG_VAL_MAX
 
-    jsr     func_peripherals_config
+    jsr     sys_peripherals_config
 
     cli
 

@@ -51,7 +51,7 @@ MASK                    =   $06
 _monitor_init:
     lda     #<_monitor_msg_init
     ldy     #>_monitor_msg_init
-    jsr     func_uart_string_write
+    jsr     sys_uart_string_write
 @loop:
     lda     IB_READY
     bne     @loop
@@ -80,7 +80,7 @@ _monitor_init:
 @error:
     lda     #<_monitor_err_command
     lda     #>_monitor_err_command
-    jsr     func_uart_string_write
+    jsr     sys_uart_string_write
 @end:
     dec     IB_READY
     stz     MONITOR_STATUS_FLAGS
@@ -212,10 +212,10 @@ monitor_error:
 
     lda     #<_monitor_err_status_flags             ;
     lda     #>_monitor_err_status_flags             ;   Reset MONITOR STATUS FLAGS and
-    jsr     func_uart_string_write                  ;   print the error.
+    jsr     sys_uart_string_write                  ;   print the error.
     lda     #<_monitor_status_flags                 ;
     lda     #>_monitor_status_flags                 ;
-    jsr     func_uart_string_write                  ;
+    jsr     sys_uart_string_write                  ;
 
     lda     #$80
     sta     MASK
@@ -223,18 +223,18 @@ monitor_error:
     lda     MONITOR_STATUS_FLAGS                    ;
     and     MASK                                    ;
     adc     #'0'                                    ;   Iterate through all of MONITOR STATUS FLAGS bits
-    jsr     func_uart_byte_write                    ;   and print them (MSB first).
+    jsr     sys_uart_byte_write                    ;   and print them (MSB first).
     lda     #' '                                    ;   Add blank spaces
-    jsr     func_uart_byte_write                    ;
-    jsr     func_uart_byte_write                    ;
+    jsr     sys_uart_byte_write                    ;
+    jsr     sys_uart_byte_write                    ;
     lsr     MASK                                    ;
     bcs     @end                                    ;
     bra     @loop_status_bits                       ;
 @end:
     lda     #$0D                                    ;
-    jsr     func_uart_byte_write                    ;   CR
+    jsr     sys_uart_byte_write                    ;   CR
     lda     #$0A                                    ;
-    jsr     func_uart_byte_write                    ;   LF
+    jsr     sys_uart_byte_write                    ;   LF
     pla
     rts
 
@@ -242,6 +242,6 @@ monitor_help:
     pha
     lda     #<_monitor_msg_help                     ;
     lda     #>_monitor_msg_help                     ;   Print the help message
-    jsr     func_uart_string_write                  ;
+    jsr     sys_uart_string_write                  ;
     pla
     rts

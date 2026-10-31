@@ -1,13 +1,5 @@
-LD		 	 = ld65
-LDFLAGS  	 = -v -S 0x8000
-AS 		 	 = ca65
-ASFLAGS  	 = -v --cpu W65C02
-CC		 	 = cc65
-CFLAGS	 	 = -v --cpu W65C02
-SIM		 	 =	sim65
-SIMFLAGS 	 =	
-
 DIR_SRC		 =	src
+DIR_INC		 =	inc
 DIR_BUILD	 =	build
 DIR_DEBUG	 =	debug
 DIR_OBJ		 =	$(DIR_BUILD)/obj
@@ -26,6 +18,15 @@ DCD_JED		 = 	$(DCD).jed
 
 FIRMWARE	 = 	firmware.bin
 FIRMWARE_SIM =	simulation.bin
+
+LD		 	 = ld65
+LDFLAGS  	 = -v -S 0x8000
+AS 		 	 = ca65
+ASFLAGS  	 = -v --cpu W65C02
+CC		 	 = cc65
+CFLAGS	 	 = -v --cpu W65C02 -I$(DIR_INC)
+SIM		 	 =	sim65
+SIMFLAGS 	 =	
 
 all: $(FIRMWARE)
 

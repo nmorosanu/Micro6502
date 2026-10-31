@@ -3,7 +3,7 @@
 ;   Description:    Blackjack game over UART.
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
-;   Modified:       29.10.2026
+;   Modified:       31.10.2026
 ;   Version:        0.0.1
 ;   
 
@@ -19,164 +19,245 @@ cards:
     .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
     ;     A  2  3  4  5  6  7  8  9  10,  J,  Q,  K
 
-_bj_msg_init:
-    .asciiz "BLACKJACK INIT"
+msg_error:
+.asciiz "\n\rInvalid action. Type 'h' for help\n\r"
 
-_bj_msg_prompt:
-    .asciiz "HIT or STAY? (h / s): "
+msg_help:
+.asciiz "\n\n\rBLACKJACK HELP MENU\n\n\rFor drawing cards, type 'd'\n\rFor staying, type 's'\n\n\r" 
 
-_bj_msg_err_command_invalid:
-    .asciiz "ERR: Invalid command\n\r"
+msg_stats:
+.asciiz "\n\rComputer's hand -> ???\n\rYour hand       -> "
 
-_bj_msg_win:
-    .asciiz "You win!\n\r"
+msg_results:
+.asciiz "\n\rResults -> \n\r"
 
-_bj_msg_lose:
-    .asciiz "You lose!\n\r"
+msg_prompt:
+.asciiz "Action > "
 
-_bj_msg_tie:
-    .asciiz "Tie!\n\r"
+msg_quit:
+.asciiz "\n\rQuitting...\n\r"
+
+msg_cw_pb:
+.asciiz "\n\rComputer won. Player busted.\n\r"
+
+msg_pw_cb:
+.asciiz "\n\rYou won! Computer busted.\n\r"
+
+msg_pw:
+.asciiz "\n\rYou won!\n\r"
+
+msg_pl:
+.asciiz "\n\rYou lost! Computer won.\n\r"
+
+msg_tie:
+.asciiz "\n\rTie.\n\r"
 
 .data
-PLAYER_HAND_TOTAL   =   $00
-SYSTEM_HAND_TOTAL   =   $01
-SHUFFLE_I           =   $02
-SHUFFLE_J           =   $03
-TMP                 =   $04
-DECK_POS            =   $05
-DECK_BASE           =   $3000
+HAND_PLAYER     =   $00     ;   valoarea acumulata de jucator
+HAND_COMPUTER   =   $01     ;   valoarea acumulata de computer
+TMP0            =   $02
+TMP1            =   $03
+TMP2            =   $04
+TMP3            =   $05
+DRAWING_DONE    =   $06     ;   
+QUIT            =   $07     ;   semnaleaza dorinta de a opri jocul.
+
+DECK_POS        =   $0F     ;   pozitia in pachetul de carti
+DECK_BASE       =   $7FCB   ;   ultimele 52 de pozitii din RAM sunt pachetul de carti
 
 .code
 .export _blackjack_init
 _blackjack_init:
-@reset:
-    lda     #<_bj_msg_init
-    lda     #>_bj_msg_init
-    jsr     func_uart_string_write
-
-    jsr     func_deck_init
-    
-    lda     DECK_BASE                       ;
-    adc     DECK_BASE + 1                   ;   Deal two random cards to the system
-    sta     SYSTEM_HAND_TOTAL               ;
-
-    lda     DECK_BASE + 2                   ;
-    adc     DECK_BASE + 3                   ;   Deal two random cards to the player
-    sta     PLAYER_HAND_TOTAL               ;
-
-    lda     #$04
-    sta     DECK_POS
-    
 @loop:
-    lda     #<_bj_msg_prompt
-    lda     #>_bj_msg_prompt
-    jsr     func_uart_string_write
-    ;
-    ;   print stats and wait for input
-    ;
-@wait:
-    lda     IB_READY
-    bne     @wait
+    jsr     _blackjack_loop
+    lda     QUIT
+    beq     @loop
+    jmp     ($FFF8)                         ;   return home
 
+_blackjack_loop:
+    jsr     _blackjack_deck_shuffle         ;   amesteca pachetul
+    stz     QUIT
+    stz     DRAWING_DONE
+    stz     DECK_POS
+
+    lda     #$00
+    jsr     _blackjack_draw
+    jsr     _blackjack_draw
+    sta     HAND_COMPUTER
+
+    lda     #$00
+    jsr     _blackjack_draw
+    jsr     _blackjack_draw
+    sta     HAND_PLAYER
+@loop:
+    lda     #<msg_stats
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_stats
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+    ;
+    ;       afisare player's hand
+    ;
+    lda     #<msg_prompt
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_prompt
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+
+@loop_action:
+    lda     IB_READY
+    bne     @loop_action
+
+    jsr     _blackjack_buffer_parse
+
+    lda     DRAWING_DONE
+    bne     @loop
     
+    clc
+    lda     HAND_PLAYER
+    cmp     #22
+    bcs     @player_bust
+    lda     HAND_COMPUTER
+    cmp     #22
+    bcs     @computer_bust
+    lda     HAND_PLAYER
+    cmp     HAND_COMPUTER
+    bcc     @player_lost
+    beq     @tie
+
+    lda     #<msg_pw
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_pw
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+
+@player_bust:
+    lda     #<msg_cw_pb
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_cw_pb
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+@computer_bust:
+    lda     #<msg_pw_cb
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_pw_cb
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+@player_lost:
+    lda     #<msg_pl
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_pl
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+@tie:
+    lda     #<msg_tie
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_tie
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+
+    lda     #<msg_results
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_results
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+    ;
+    ;   also print the actual results
+    ;
+    rts
+
+_blackjack_deck_shuffle:
+    rts
+
+_blackjack_buffer_parse:
+    pha
     lda     IB_BASE
+    cmp     #'d'
+    beq     @draw
     cmp     #'s'
     beq     @stay
     cmp     #'h'
-    beq     @hit
-    lda     #<_bj_msg_err_command_invalid
-    lda     #>_bj_msg_err_command_invalid
-    jsr     func_uart_string_write
-    bra     @loop
+    beq     @help
+    cmp     #'q'
+    beq     @quit
+
+    lda     #<msg_error                     ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_error                     ;   Semnaleaza eroarea in caz ca nu s-a
+    sta     ZP_STRING_BUFFER + 1            ;   gasit o comanda valida.
+    jsr     sys_uart_string_write           ;
+
+    bra     @end
+@draw:
+    jsr     _blackjack_draw
+    bra     @end
 @stay:
-@system_loop:
-    lda     SYSTEM_HAND_TOTAL
-    cmp     #17
-    bcs     @system_loop_end
-    jsr     func_hit
-    adc     SYSTEM_HAND_TOTAL
-    sta     SYSTEM_HAND_TOTAL
-    bra     @system_loop
-@system_loop_end:
-    cmp     PLAYER_HAND_TOTAL
-    bcc     @player_win
-    bcs     @system_win
-    bra     @tie
-@tie:
-    lda     #<_bj_msg_tie
-    lda     #>_bj_msg_tie
-    jsr     func_uart_string_write
-    bra     @reset
-@system_win:
-    lda     #<_bj_msg_lose
-    lda     #>_bj_msg_lose
-    jsr     func_uart_string_write
-    bra     @reset
+    jsr     _blackjack_stay
+    bra     @end
+@help:
+    jsr     _blackjack_help
+    bra     @end
+@quit:
+    jsr     _blackjack_quit
+@end:
+    pla
+    rts
 
-@player_win:
-    lda     #<_bj_msg_win
-    lda     #>_bj_msg_win
-    jsr     func_uart_string_write
-    bra     @reset
+;
+;
+;   returns value in A
+_blackjack_draw:
+    phx
 
-@hit:
-    jsr     func_hit
-    adc     PLAYER_HAND_TOTAL
-    sta     PLAYER_HAND_TOTAL
-    cmp     #21
-    bcs     @system_win
-    beq     @skip
-@skip:
-    bra     @loop
+    ldx     DECK_POS                        ;
+    cpx     #52                             ;   Daca pozitia a ajuns la 52, reseteaz-o la 0.
+    bne     @continue                       ;
+    stz     DECK_POS                        ;
+    ldx     DECK_POS
+@continue:
+    clc
+    adc     DECK_BASE, X
+    inx
+    stx     DECK_POS
 
-func_deck_init:
+    plx
+    rts
+
+_blackjack_stay:
     pha
     phx
 
-    lda     #$51
-    sta     PRNG_VAL_MAX
+    clc
+    lda     HAND_COMPUTER
+@loop:
+    cmp     #17
+    bcc     @end
 
-    ldx     #$00
-@loop0:
-    txa
-    sta     DECK_BASE, X
-    inx
-    cpx     #$51
-    bne     @loop0
-    stz     DECK_BASE
-    
-    lda     #51
-    sta     SHUFFLE_I
-@shuffle:
-    lda     SHUFFLE_I
-    jsr     func_rng
-    sta     SHUFFLE_J
-    
-    ldx     SHUFFLE_I
-    lda     DECK_BASE, X
-    sta     TMP
+    jsr     _blackjack_draw
 
-    ldx     SHUFFLE_J
-    lda     DECK_BASE, X
-    ldx     SHUFFLE_I
-    sta     DECK_BASE, X
-
-    ldx     SHUFFLE_J
-    lda     TMP
-    sta     DECK_BASE, X
-
-    dec     SHUFFLE_I
-    bne     @shuffle
+    bra     @loop
+@end:
+    sta     HAND_COMPUTER
 
     plx
     pla
     rts
 
-func_hit:
-    phx
-    ldx     DECK_POS
-    lda     DECK_BASE, X
-    inx
-    stx     DECK_POS
-    plx
+_blackjack_help:
+    lda     #<msg_help
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_help
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+    rts
+
+_blackjack_quit:
+    lda     #<msg_quit
+    sta     ZP_STRING_BUFFER
+    lda     #>msg_quit
+    sta     ZP_STRING_BUFFER + 1
+    jsr     sys_uart_string_write
+
+    inc     QUIT
+
     rts

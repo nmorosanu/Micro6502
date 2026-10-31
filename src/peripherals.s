@@ -10,8 +10,8 @@
 .include    "./inc/memory.inc"
 
 .code
-.export func_peripherals_config
-func_peripherals_config:
+.export sys_peripherals_config
+sys_peripherals_config:
     ;       =================
     ;       VIA CONFIGURATION
     ;       =================
@@ -39,56 +39,56 @@ func_peripherals_config:
 
     rts
 
-.export func_lcd_init
-func_lcd_init:
-    jsr     func_lcd_delay
+.export sys_lcd_init
+sys_lcd_init:
+    jsr     sys_lcd_delay
     lda     #$33                    ;
-    jsr     func_lcd_command        ;
+    jsr     sys_lcd_command        ;
     lda     #$32                    ;
-    jsr     func_lcd_command        ;
+    jsr     sys_lcd_command        ;
     lda     #$28                    ;
-    jsr     func_lcd_command        ;
+    jsr     sys_lcd_command        ;
     lda     #$0C                    ;
-    jsr     func_lcd_command        ;
+    jsr     sys_lcd_command        ;
     lda     #$06                    ;
-    jsr     func_lcd_command        ;
+    jsr     sys_lcd_command        ;
     lda     #$01                    ;
-    jsr     func_lcd_command        ;
+    jsr     sys_lcd_command        ;
     lda     #$80                    ;
-    jsr     func_lcd_command        ;
+    jsr     sys_lcd_command        ;
     rts
 
-.export     func_lcd_delay
-func_lcd_delay:   
+.export     sys_lcd_delay
+sys_lcd_delay:   
     ldx     #$FF
 @dx:
     dex
     bne     @dx
     rts
 
-.export func_lcd_clear
-func_lcd_clear:
+.export sys_lcd_clear
+sys_lcd_clear:
     pha
     lda     #$01
-    jsr     func_lcd_command
+    jsr     sys_lcd_command
     lda     #$80
-    jsr     func_lcd_command
+    jsr     sys_lcd_command
     pla
     rts
 
-.export func_lcd_command
-func_lcd_command:
+.export sys_lcd_command
+sys_lcd_command:
     sta     $00
     and     #$F0
     ora     #$08
     sta     VIA_PORTB
 
-    jsr     func_lcd_delay
+    jsr     sys_lcd_delay
 
     and     #$F0
     sta     VIA_PORTB
 
-    jsr     func_lcd_delay
+    jsr     sys_lcd_delay
 
     lda     $00
     rol
@@ -99,28 +99,28 @@ func_lcd_command:
     ora     #$08
     sta     VIA_PORTB
 
-    jsr     func_lcd_delay
+    jsr     sys_lcd_delay
 
     and     #$F0
     sta     VIA_PORTB
 
-    jsr     func_lcd_delay
+    jsr     sys_lcd_delay
 
     rts
 
-.export func_lcd_byte_write
-func_lcd_byte_write:
+.export sys_lcd_byte_write
+sys_lcd_byte_write:
     sta     $00
     and     #$F0
     ora     #$0C
     sta     VIA_PORTB
 
-    jsr     func_lcd_delay
+    jsr     sys_lcd_delay
 
     and     #$F4
     sta     VIA_PORTB
 
-    jsr     func_lcd_delay
+    jsr     sys_lcd_delay
 
     lda     $00
     rol
@@ -131,23 +131,23 @@ func_lcd_byte_write:
     ora     #$0C
     sta     VIA_PORTB
 
-    jsr     func_lcd_delay
+    jsr     sys_lcd_delay
 
     and     #$F4
     sta     VIA_PORTB
 
-    jsr     func_lcd_delay
+    jsr     sys_lcd_delay
     lda     $00
 
     rts
 
-.export func_lcd_string_write
-func_lcd_string_write:  
+.export sys_lcd_string_write
+sys_lcd_string_write:  
     ldy     #$00
 @loop:      lda     (ZP_STRING_BUFFER), y
     beq     @end
 
-    jsr     func_lcd_byte_write
+    jsr     sys_lcd_byte_write
     iny
 
     bra     @loop
@@ -155,8 +155,8 @@ func_lcd_string_write:
 @end:       
     rts
 
-.export func_uart_byte_read
-func_uart_byte_read:
+.export sys_uart_byte_read
+sys_uart_byte_read:
     pha
 @poll:
     lda     ACIA_STATUS
@@ -167,8 +167,8 @@ func_uart_byte_read:
 
     rts
 
-.export func_uart_byte_write
-func_uart_byte_write:   
+.export sys_uart_byte_write
+sys_uart_byte_write:   
     sta     ACIA_DATA
     pha
     lda     #$FF
@@ -178,8 +178,8 @@ func_uart_byte_write:
     pla
     rts
 
-.export func_uart_string_write
-func_uart_string_write:
+.export sys_uart_string_write
+sys_uart_string_write:
     ldy     #$00
 @loop:      
     lda     (ZP_STRING_BUFFER), y
@@ -220,15 +220,15 @@ acia_irq:
     cmp     #$08                        ;   DEL or BS?
     beq     @DEL                        ;
 
-    jsr     func_uart_byte_write        ;
+    jsr     sys_uart_byte_write        ;
     inx                                 ;
     bra     @end                        ;
 
 @CR:                                    ;
     stz     IB_READY                    ;
-    jsr     func_uart_byte_write            ;   Input buffer can be read by the running program
+    jsr     sys_uart_byte_write            ;   Input buffer can be read by the running program
     lda     #$0A                        ;   
-    jsr     func_uart_byte_write            ;
+    jsr     sys_uart_byte_write            ;
     stx     IB_IDX_TMP                  ;   Store the current index for later use
     ldx     #$00                        ;   Reset the input buffer index
 @DEL:
@@ -237,11 +237,11 @@ acia_irq:
     dex                                 ;
 
     lda     #$08                        ;
-    jsr     func_uart_byte_write            ;   send backspace
+    jsr     sys_uart_byte_write            ;   send backspace
     lda     #$20                        ;
-    jsr     func_uart_byte_write            ;   send space
+    jsr     sys_uart_byte_write            ;   send space
     lda     #$08                        ;
-    jsr     func_uart_byte_write            ;   send backspace
+    jsr     sys_uart_byte_write            ;   send backspace
 @end:
     stx     IB_IDX
 
