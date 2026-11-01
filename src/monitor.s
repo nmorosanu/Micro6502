@@ -7,6 +7,10 @@
 ;   Version:        0.0.1
 ;   
 
+;
+;   In curs de dezvoltare.
+;
+
 .include "inc/memory.inc"
 .include "inc/utils.inc"
 .include "inc/peripherals.inc"
