@@ -205,7 +205,7 @@ acia_irq:
 
 @poll:                                  ;
     lda     ACIA_STATUS                 ;
-    bit     #$08                        ;   Poll until the byte can be read
+    bit     #$08                        ;   Polling pana cand octetul este valid
     beq     @poll                       ;
     lda     ACIA_DATA                   ;
 
@@ -217,31 +217,31 @@ acia_irq:
 
     cmp     #$7F                        ;
     beq     @DEL                        ;
-    cmp     #$08                        ;   DEL or BS?
+    cmp     #$08                        ;   DEL sau BS?
     beq     @DEL                        ;
 
-    jsr     sys_uart_byte_write        ;
+    jsr     sys_uart_byte_write         ;
     inx                                 ;
     bra     @end                        ;
 
 @CR:                                    ;
     stz     IB_READY                    ;
-    jsr     sys_uart_byte_write            ;   Input buffer can be read by the running program
+    jsr     sys_uart_byte_write         ;   Input buffer can be read by the running program
     lda     #$0A                        ;   
-    jsr     sys_uart_byte_write            ;
-    stx     IB_IDX_TMP                  ;   Store the current index for later use
+    jsr     sys_uart_byte_write         ;
+    ;stx     IB_IDX_TMP                  ;   Store the current index for later use
     ldx     #$00                        ;   Reset the input buffer index
 @DEL:
     txa                                 ;
-    beq     @end                        ;   check if input buffer is already zero
-    dex                                 ;
+    beq     @end                        ;   if (IB_IDX == 0)
+    dex                                 ;       return
 
     lda     #$08                        ;
-    jsr     sys_uart_byte_write            ;   send backspace
+    jsr     sys_uart_byte_write         ;   send backspace
     lda     #$20                        ;
-    jsr     sys_uart_byte_write            ;   send space
+    jsr     sys_uart_byte_write         ;   send space
     lda     #$08                        ;
-    jsr     sys_uart_byte_write            ;   send backspace
+    jsr     sys_uart_byte_write         ;   send backspace
 @end:
     stx     IB_IDX
 

@@ -3,7 +3,7 @@
 ;   Description:    Some subroutines which can be used in one or more submodules / programs
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
-;   Modified:       31.10.2026
+;   Modified:       01.11.2026
 ;   Version:        0.0.1
 ;   
 
@@ -11,12 +11,14 @@
 .include "inc/peripherals.inc"
 
 .code
-.export num2str
-num2str:
+.export sys_num2str
+sys_num2str:
     pha
     phx
-    
+    phy
+
     ldx     #0
+    stx     NUM2STR + 3             ;   NUM2STR[3] = '\0'
 @sute:
     cmp     #100
     bcc     @sute_end
@@ -26,12 +28,14 @@ num2str:
     bra     @sute
 
 @sute_end:
+    tay
     txa
     clc
     adc     #'0'
     sta     NUM2STR                 ;   NUM2STR[0] = A / 100 % 10 + '0'
 
     ldx     #0
+    tya
 @zeci:
     cmp     #10
     bcc     @zeci_end
@@ -40,22 +44,25 @@ num2str:
     inx
     bra     @zeci
 @zeci_end:
+    tay
     txa
     clc
     adc     #'0'
     sta     NUM2STR + 1             ;   NUM2STR[1] = A / 10 % 10 + '0'
 
+    tya
     clc
     adc     #'0'
     sta     NUM2STR + 2             ;   NUM2STR[2] = A % 10 + '0'
-    stz     NUM2STR + 3             ;   NUM2STR[3] = '\0'
 
+    ply
     plx
     pla
     rts
 
 .export sys_prng
 sys_prng:
+    phx
     lda     PRNG_SEED
     tax
     
@@ -84,6 +91,7 @@ sys_prng:
     bcs     @modloop
     
     adc     PRNG_VAL_MAX
+    plx
     rts
 
 .export sys_crc16_modbus

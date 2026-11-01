@@ -3,13 +3,15 @@
 ;   Description:    Hangman game over UART.
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
-;   Modified:       31.10.2026
+;   Modified:       01.11.2026
 ;   Version:        0.0.1
 ;   
 
 .include "inc/memory.inc"
 .include "inc/peripherals.inc"
 .include "inc/utils.inc"
+
+.feature string_escapes
 
 .rodata
 msg_init:
@@ -18,8 +20,11 @@ msg_init:
 msg_prompt:
 .asciiz "character > "
 
-msg_status:
-.asciiz "character > "
+msg_lives:
+.asciiz "\n\rLives:       "
+
+msg_hidden_word:
+.asciiz "\n\rHidden word: "
 
 msg_help:
 .asciiz "\n\rHANGMAN HELP MENU\n\rWhen asked for input, type the character you'd like to check for and then press enter.\n\rThe only valid characters are A-Z (uppercase only).\n\rNo special characters allowed.\n\r"
@@ -38,7 +43,7 @@ msg_quit:
 
 .data
 WORD_BUFFER_BASE    =   $7FBF   ;   inceputul copiei pentru cuvantul selectat.
-QUIT                =   $00     ;   indica dorinta de a inchide programul.
+;QUIT                =   $00     ;   indica dorinta de a inchide programul.
 LIVES               =   $01     ;   vieti / incercari ramase.
 GUESSED             =   $02     ;   numarul de ghicite.
 BUFFER              =   $03     ;   buffer de un caracter.
@@ -55,18 +60,16 @@ _hangman_init:
     lda     #>msg_init
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
-    stz     QUIT
+
 @loop:
     jsr     _hangman_loop
-    lda     QUIT                            ;
-    beq     @loop                           ;
-    jmp     ($FFF8)                         ;   salt la "HOME", daca QUIT != 0
+    bra     @loop
 
 _hangman_loop:
     lda     #3                              ;
     sta     LIVES                           ;   LIVES = 3
 
-    lda     #4                              ;
+    lda     #3                              ;
     sta     PRNG_VAL_MAX                    ;
     jsr     sys_prng                        ;
     sta     WORD_IDX                        ;   WORD_IDX = random(0, 3)
@@ -74,15 +77,27 @@ _hangman_loop:
     jsr     _hangman_word_length
     jsr     _hangman_word_buffer_load
 @loop:
-    lda     #<msg_status                    ;
+    lda     #<msg_lives                     ;
     sta     ZP_STRING_BUFFER                ;
-    lda     #>msg_status                    ;   Afisare mesaj cu status.
+    lda     #>msg_lives                     ;   
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+    lda     LIVES                           ;   Afiseaza numarul de incercari ramase.
+    jsr     sys_num2str                     ;
+    lda     #<NUM2STR                       ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>NUM2STR                       ;
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
 
+    lda     #<msg_hidden_word               ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_hidden_word               ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;   Afiseaza cuvantul ascuns.
     lda     #<WORD_HIDDEN_PTR               ;
     sta     ZP_STRING_BUFFER                ;
-    lda     #>WORD_HIDDEN_PTR               ;   Afisare cuvant ascuns.
+    lda     #>WORD_HIDDEN_PTR               ;
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
 
@@ -94,7 +109,7 @@ _hangman_loop:
 
 @loop_buffer:                               ;
     lda     IB_READY                        ;   Asteapta pana cand se poate citi bufferul.
-    beq     @loop_buffer                    ;
+    bne     @loop_buffer                    ;
 
     lda     IB_BASE                         ;
     sta     BUFFER                          ;   BUFFER = IB_BASE
@@ -180,6 +195,11 @@ _hangman_buffer_parse:
     beq     @quit
     cmp     #'h'
     beq     @help
+
+    ;
+    ;   verifica caracterul
+    ;
+
     bra     @error
 @quit:  
     jsr     _hangman_quit
@@ -190,6 +210,7 @@ _hangman_buffer_parse:
 @error:
     jsr     _hangman_error
 @end:
+    dec     IB_READY
     rts
 
 _hangman_word_length:
@@ -233,5 +254,6 @@ _hangman_quit:
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
 
-    inc     QUIT                            ;   QUIT = 1 -> salt la "HOME"
+    jmp     ($FFF8)                         ;   salt -> "HOME"
+
     rts

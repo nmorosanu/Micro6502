@@ -3,7 +3,7 @@
 ;   Description:    Blackjack game over UART.
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
-;   Modified:       31.10.2026
+;   Modified:       01.11.2026
 ;   Version:        0.0.1
 ;   
 
@@ -11,57 +11,69 @@
 .include "inc/peripherals.inc"
 .include "inc/utils.inc"
 
+.feature string_escapes
+
 .rodata
 cards:  .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
         .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
         .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
         .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
-    ;     A  2  3  4  5  6  7  8  9  10,  J,  Q,  K
+        ;     A  2  3  4  5  6  7  8  9  10,  J,  Q,  K
 
 msg_init:
 .asciiz "\n\rBLACKJACK GAME\n\rBoth you and the computer draw 2 cards at first.\n\rType 'h' to print the help menu.\n\r"
 
 msg_error:
-.asciiz "\n\rInvalid action. Type 'h' for help\n\r"
+.asciiz "Invalid action. Type 'h' for help\n\r"
 
 msg_help:
-.asciiz "\n\n\rBLACKJACK HELP MENU\n\n\rFor drawing cards, type 'd'\n\rFor staying, type 's'\n\n\r" 
+.asciiz "\n\r* BLACKJACK HELP MENU\n\r* d -> draw new card\n\r* s -> stay\n\r* q -> quit program\n\r" 
 
 msg_stats:
-.asciiz "\n\rComputer's hand -> ???\n\rYour hand       -> "
+.asciiz "Computer's hand -> ???\n\rYour hand       -> "
 
-msg_results:
-.asciiz "\n\rResults -> \n\r"
+msg_results_part1:
+.asciiz "+---------------+\n\r     RESULTS     \n\r       YOU - "
+
+msg_results_part2:
+.asciiz "\n\r  COMPUTER - "
+
+msg_results_part3:
+.asciiz "\n\r+---------------+\n\r"
 
 msg_prompt:
-.asciiz "Action > "
+.asciiz "\n\rAction > "
 
 msg_quit:
-.asciiz "\n\rQuitting...\n\r"
+.asciiz "Quitting...\n\r"
+
+msg_shuffling:
+.asciiz "Shuffling cards...\n\r"
 
 msg_cw_pb:
-.asciiz "\n\rComputer won. Player busted.\n\r"
+.asciiz "  Player busted\n\r"
 
 msg_pw_cb:
-.asciiz "\n\rYou won! Computer busted.\n\r"
+.asciiz " Computer busted\n\r"
 
 msg_pw:
-.asciiz "\n\rYou won!\n\r"
+.asciiz "    You WIN\n\r"
 
 msg_pl:
-.asciiz "\n\rYou lost! Computer won.\n\r"
+.asciiz "    You LOST\n\r"
 
 msg_tie:
-.asciiz "\n\rTie.\n\r"
+.asciiz "  *    TIE    *\n\r"
 
 .data
-HAND_PLAYER     =   $00     ;   valoarea acumulata de jucator
-HAND_COMPUTER   =   $01     ;   valoarea acumulata de computer
-DRAWING_DONE    =   $02     ;   
-QUIT            =   $03     ;   semnaleaza dorinta de a opri programul.
-TMP0            =   $04
-DECK_POS        =   $0A     ;   pozitia in pachetul de carti
-DECK_BASE       =   $7FCB   ;   ultimele 52 de pozitii din RAM sunt pachetul de carti
+HAND_COMPUTER   =   $00     ;   valoarea acumulata de computer
+DRAWING_DONE    =   $01     ;   
+HAND_PLAYER     =   $02     ;   valoarea acumulata de jucator
+TMP0            =   $03
+TMP1            =   $04
+DECK_POS        =   $05     ;   pozitia in pachetul de carti
+DECK_BASE       =   $7F00   ;   ultimele 52 de pozitii din RAM sunt pachetul de carti
+;7FCB
 
 .code
 .export _blackjack_init
@@ -71,20 +83,11 @@ _blackjack_init:
     lda     #>msg_init                      ;   Afiseaza mesaj de initializare
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
-
-@loop:                                      ;
-    jsr     _blackjack_loop                 ;
-    lda     QUIT                            ;
-    beq     @loop
-    jmp     ($FFF8)                         ;   Salt la "HOME".
-
-_blackjack_loop:
-    jsr     _blackjack_deck_shuffle         ;   Amesteca pachetul.
-
-    stz     QUIT                            ;
+@mainloop:
     stz     DRAWING_DONE                    ;   Reseteaza variabilele
     stz     DECK_POS                        ;
-    stz     TMP0                            ;
+
+    jsr     _blackjack_deck_shuffle         ;   Amesteca pachetul.
 
     lda     #$00                            ;
     jsr     _blackjack_draw                 ;
@@ -95,6 +98,7 @@ _blackjack_loop:
     jsr     _blackjack_draw                 ;
     jsr     _blackjack_draw                 ;   Jucatorul primeste 2 carti.
     sta     HAND_PLAYER                     ;
+
 @loop:
     lda     #<msg_stats                     ;
     sta     ZP_STRING_BUFFER                ;
@@ -103,7 +107,7 @@ _blackjack_loop:
     jsr     sys_uart_string_write           ;
 
     lda     HAND_PLAYER                     ;
-    jsr     NUM2STR                         ;
+    jsr     sys_num2str                     ;
     lda     #<NUM2STR                       ;
     sta     ZP_STRING_BUFFER                ;   Afiseaza scorul jucatorului.
     lda     #>NUM2STR                       ;
@@ -123,8 +127,13 @@ _blackjack_loop:
     jsr     _blackjack_buffer_parse
 
     lda     DRAWING_DONE
-    bne     @loop
-    
+    beq     @loop
+
+    jsr     _blackjack_results
+
+    bra     @mainloop
+
+_blackjack_results:
     clc
     lda     HAND_PLAYER
     cmp     #22
@@ -142,6 +151,7 @@ _blackjack_loop:
     lda     #>msg_pw
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
+    bra     @results
 
 @player_bust:
     lda     #<msg_cw_pb
@@ -149,18 +159,24 @@ _blackjack_loop:
     lda     #>msg_cw_pb
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
+    bra     @results
+
 @computer_bust:
     lda     #<msg_pw_cb
     sta     ZP_STRING_BUFFER
     lda     #>msg_pw_cb
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
+    bra     @results
+
 @player_lost:
     lda     #<msg_pl
     sta     ZP_STRING_BUFFER
     lda     #>msg_pl
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
+    bra     @results
+
 @tie:
     lda     #<msg_tie
     sta     ZP_STRING_BUFFER
@@ -168,15 +184,38 @@ _blackjack_loop:
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
 
-    lda     #<msg_results
-    sta     ZP_STRING_BUFFER
-    lda     #>msg_results
-    sta     ZP_STRING_BUFFER + 1
-    jsr     sys_uart_string_write
+@results:
+    lda     #<msg_results_part1             ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_results_part1             ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+    lda     HAND_PLAYER                     ;   Afiseaza scorul jucatorului.
+    jsr     sys_num2str                     ;
+    lda     #<NUM2STR                       ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>NUM2STR                       ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
 
-    ;
-    ;   also print the actual results
-    ;
+    lda     #<msg_results_part2             ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_results_part2             ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+    lda     HAND_COMPUTER                   ;   Afiseaza scorul computerului.
+    jsr     sys_num2str                     ;
+    lda     #<NUM2STR                       ;
+    sta     ZP_STRING_BUFFER                ;   
+    lda     #>NUM2STR                       ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+    lda     #<msg_results_part3             ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_results_part3             ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+
     rts
 
 _blackjack_deck_shuffle:
@@ -184,31 +223,52 @@ _blackjack_deck_shuffle:
     phx
     phy
 
-    ldx     #00
-@loop:
+    lda     #<cards                         ;
+    sta     TMP0                            ;
+    lda     #>cards                         ;
+    sta     TMP1                            ; TMP0 + 1
+
+    lda     #<msg_shuffling                 ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_shuffling                 ;  Afiseaza mesaj.
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+
+    ldy     #$00
+@copy:
+    lda     (TMP0), Y
+    sta     DECK_BASE, Y
+    
+    iny
+    cpy     #52
+    bne     @copy
+
+    ldx     #$01
+@shuffle:
     txa                                     ;
-    inc                                     ;
     sta     PRNG_VAL_MAX                    ;
     jsr     sys_prng                        ;
-    tay                                     ;   Y = sys_prng(0, i + 1)
-
-    lda     DECK_BASE, X                    ;
-    sta     TMP0                            ;   TMP0 = deck[i]
+    tay                                     ;   Y = sys_prng(0, X)
 
     lda     DECK_BASE, Y                    ;
-    sta     DECK_BASE, X                    ;   deck[i] = deck[j]
+    sta     TMP0                            ;   TMP0 = DECK_BASE[Y];
+
+    lda     DECK_BASE, X                    ;
+    sta     DECK_BASE, Y                    ;   DECK_BASE[Y] = DECK_BASE[X]
 
     lda     TMP0                            ;
-    sta     DECK_BASE, Y                    ;   deck[j] = TMP0
+    sta     DECK_BASE, X                     ;   DECK_BASE[X] = TMP0
 
-    inx                                     ;
-    cpx     #52                             ;   itereaza peste toate cartile din pachet [0, 51]
-    bne     @loop                           ;
-
+    inx
+    cpx     #52
+    bne     @shuffle
+    
     ply
     plx
     pla
+
     rts
+
 
 _blackjack_buffer_parse:
     pha
@@ -231,7 +291,11 @@ _blackjack_buffer_parse:
 
     bra     @end
 @draw:
+    lda     HAND_PLAYER
     jsr     _blackjack_draw
+    sta     HAND_PLAYER
+    cmp     #22
+    bcs     @stay
     bra     @end
 @stay:
     jsr     _blackjack_stay
@@ -242,6 +306,7 @@ _blackjack_buffer_parse:
 @quit:
     jsr     _blackjack_quit
 @end:
+    dec     IB_READY
     pla
     rts
 
@@ -269,15 +334,17 @@ _blackjack_stay:
     pha
     phx
 
-    clc
     lda     HAND_COMPUTER                   ;   A = HAND_COMPUTER
 @loop:                                      ;
+    clc
     cmp     #17                             ;
-    bcc     @end                            ;   while (A < 17) {
+    bcs     @end                            ;   while (A < 17) {
     jsr     _blackjack_draw                 ;       A = A + _blackjack_draw;
     bra     @loop                           ;   }
 @end:                                       ;
     sta     HAND_COMPUTER                   ;   HAND_COMPUTER = A
+    
+    dec     DRAWING_DONE
 
     plx
     pla
@@ -298,6 +365,7 @@ _blackjack_quit:
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
 
-    inc     QUIT                            ;   Quit = 1 -> salt la "HOME"
+    dec     IB_READY
+    jmp     ($FFF8)                         ;   Salt la "HOME".
 
     rts
