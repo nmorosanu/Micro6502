@@ -22,7 +22,7 @@ msg_init:
 .asciiz "\n\rHANGMAN GAME\n\rWords must be written in uppercase!\n\r\n\rType 'h' to reveal the help menu\n\r"
 
 msg_prompt:
-.asciiz "character > "
+.asciiz "\n\rcharacter > "
 
 msg_lives:
 .asciiz "\n\rLives:       "
@@ -45,16 +45,26 @@ msg_lose:
 msg_quit:
 .asciiz "\n\rQuitting.\n\r"
 
+w0: .asciiz "PROCESSOR"
+w1: .asciiz "GALAXY"
+w2: .asciiz "PARTICLE"
+w3: .asciiz "NATURE"
+
+words:
+.word   w0
+.word   w1
+.word   w2
+.word   w3
+
 .data
-WORD_BUFFER_BASE    =   $7FBF   ;   inceputul copiei pentru cuvantul selectat.
-;QUIT                =   $00     ;   indica dorinta de a inchide programul.
-LIVES               =   $01     ;   vieti / incercari ramase.
-GUESSED             =   $02     ;   numarul de ghicite.
-BUFFER              =   $03     ;   buffer de un caracter.
-WORD_IDX            =   $04     ;   indicele cuvantului din lista de cuvinte.
-WORD_PTR            =   $05     ;   ptr la cuvantul ales.
-WORD_LENGTH         =   $06     ;   ptr la cuvantul ales.
-WORD_HIDDEN_PTR     =   $07     ;   ptr la cuvantul ascuns.
+WORD_BUFFER_BASE    =   $7F00   ;   inceputul copiei pentru cuvantul selectat.
+LIVES               =   $00     ;   vieti / incercari ramase.
+GUESSED             =   $01     ;   numarul de ghicite.
+BUFFER              =   $02     ;   buffer de un caracter.
+WORD_IDX            =   $03     ;   indicele cuvantului din lista de cuvinte.
+WORD_PTR            =   $04     ;   ptr la cuvantul ales.
+WORD_LENGTH         =   $05     ;   ptr la cuvantul ales.
+WORD_HIDDEN_PTR     =   $06     ;   ptr la cuvantul ascuns.
 
 .code
 .global _hangman_init
@@ -65,82 +75,59 @@ _hangman_init:
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
 
-@loop:
-    jsr     _hangman_loop
-    bra     @loop
+MAINLOOP:
+    lda     #5                              ;
+    sta     LIVES                           ;   LIVES = 5
 
-_hangman_loop:
-    lda     #3                              ;
-    sta     LIVES                           ;   LIVES = 3
-
-    lda     #3                              ;
+    lda     #4                              ;
     sta     PRNG_VAL_MAX                    ;
     jsr     sys_prng                        ;
-    sta     WORD_IDX                        ;   WORD_IDX = random(0, 3)
+    asl
+    tax
+    sta     WORD_IDX                        ;   WORD_IDX = random(0, 4)
+    lda     words, X                        ;
+    sta     WORD_PTR                        ;
+    lda     words + 1, X                    ;
+    sta     WORD_PTR + 1                    ;   char* WORD_PTR = words[X]
 
-    jsr     _hangman_word_length
-    jsr     _hangman_word_buffer_load
+    lda     #<WORD_BUFFER_BASE
+    sta     WORD_HIDDEN_PTR
+    lda     #>WORD_BUFFER_BASE
+    sta     WORD_HIDDEN_PTR + 1
+
+    jsr     _hangman_word_length            ;   needs more examination
+    jsr     _hangman_word_buffer_load       ;   needs more examination
+
 @loop:
-    lda     #<msg_lives                     ;
-    sta     ZP_STRING_BUFFER                ;
-    lda     #>msg_lives                     ;   
-    sta     ZP_STRING_BUFFER + 1            ;
-    jsr     sys_uart_string_write           ;
-    lda     LIVES                           ;   Afiseaza numarul de incercari ramase.
-    jsr     sys_num2str                     ;
-    lda     #<NUM2STR                       ;
-    sta     ZP_STRING_BUFFER                ;
-    lda     #>NUM2STR                       ;
-    sta     ZP_STRING_BUFFER + 1            ;
-    jsr     sys_uart_string_write           ;
-
-    lda     #<msg_hidden_word               ;
-    sta     ZP_STRING_BUFFER                ;
-    lda     #>msg_hidden_word               ;
-    sta     ZP_STRING_BUFFER + 1            ;
-    jsr     sys_uart_string_write           ;   Afiseaza cuvantul ascuns.
-    lda     #<WORD_HIDDEN_PTR               ;
-    sta     ZP_STRING_BUFFER                ;
-    lda     #>WORD_HIDDEN_PTR               ;
-    sta     ZP_STRING_BUFFER + 1            ;
-    jsr     sys_uart_string_write           ;
-
-    lda     #<msg_prompt                    ;
-    sta     ZP_STRING_BUFFER                ;
-    lda     #>msg_prompt                    ;   Afisare prompt.
-    sta     ZP_STRING_BUFFER + 1            ;
-    jsr     sys_uart_string_write           ;
-
+    jsr     _hangman_status_print
 @loop_buffer:                               ;
     lda     IB_READY                        ;   Asteapta pana cand se poate citi bufferul.
     bne     @loop_buffer                    ;
 
-    lda     IB_BASE                         ;
-    sta     BUFFER                          ;   BUFFER = IB_BASE
-
     jsr     _hangman_buffer_parse
-    lda     LIVES
-    beq     @lose
+    lda     LIVES                           ;
+    beq     @lose                           ;   if (LIVES == 0) goto @lose
     jsr     _hangman_strcmp
     beq     @win
     bra     @loop
+
 @lose:
     lda     #<msg_lose                      ;
     sta     ZP_STRING_BUFFER                ;
     lda     #>msg_lose                      ;   Afiseaza mesaj lose.
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
+    bra     MAINLOOP
+
 @win:
     lda     #<msg_win                       ;
     sta     ZP_STRING_BUFFER                ;
     lda     #>msg_win                       ;   Afiseaza mesaj win.
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
-
-    rts
+    bra     MAINLOOP
 
 _hangman_strcmp:
-
 @loop:
     lda     (WORD_PTR), Y                   ;
     beq     @end                            ;   while (A != '\0') {
@@ -149,7 +136,6 @@ _hangman_strcmp:
     beq     @loop                           ;           return 1;
                                             ;       ++Y;
     lda     #1                              ;   }
-
     rts                                     ;
 
 @end:                                       ;   return 0;
@@ -158,51 +144,84 @@ _hangman_strcmp:
     rts
 
 _hangman_word_buffer_load:
+    pha
+    phy
+
+    lda     #'_'                            ;
+    ldy     WORD_LENGTH                     ;   while (Y != 0) {
+@loop:                                      ;       WORD_HIDDEN_PTR[Y] = '_';
+    dey                                     ;       --Y;
+    sta     (WORD_HIDDEN_PTR), Y            ;   }
+    bne     @loop                           ;
+
+    lda     WORD_LENGTH                     ;
+    sta     PRNG_VAL_MAX                    ;   % WORD_LENGTH
+
+    tay                                     ;
+    lda     #0                              ;
+    sta     (WORD_HIDDEN_PTR), Y            ;   WORD_HIDDEN_PTR[WORD_LENGTH] = '\0';
+
+    jsr     sys_prng                        ;   A = random(0, WORD_LENGTH)
+    tay                                     ;
+    lda     (WORD_PTR), Y                   ;   Y = A;
+    sta     (WORD_HIDDEN_PTR), Y            ;   WORD_HIDDEN_PTR[Y] = WORD_PTR[Y];
+
+    ply
+    pla
+
     rts
 
 _hangman_character_search:
     pha
     phx
     phy
+    
+    ldx     #0
+    ldy     #0
+@loop:
+    lda     (WORD_PTR), Y
+    beq     @lives_check
 
-    ldx     #0                              ;   X = 0
-    ldy     #0                              ;   Y = 0
+    cmp     BUFFER
+    bne     @skip
+    ldx     #1
+    sta     (WORD_HIDDEN_PTR), Y
 
-@loop:                                      ;
-    lda     (WORD_PTR), Y                   ;   while (WORD_PTR[Y] != 0) {
-    beq     @loop_end                       ;       if (BUFFER == WORD_PTR[Y]) {
-    cmp     BUFFER                          ;           X = 1;
-    bne     @not_found                      ;           WORD_HIDDEN_PTR[Y] = BUFFER;
-                                            ;       }
-    ldx     #1                              ;       Y = Y + 1;
-    lda     BUFFER                          ;   }
-    sta     (WORD_HIDDEN_PTR), Y            ;
-                                            ;
-@not_found:                                 ;
-    iny                                     ;
-    bra     @loop                           ;
+@skip:
+    iny
+    bne     @loop
 
-@loop_end:                                  ;
-    txa                                     ;   if (X == 0)
-    bne     @end                            ;       LIVES = LIVES - 1;
-    dec     LIVES                           ;   
+@lives_check:
+    txa
+    bne     @end
+    dec     LIVES
 
 @end:
     ply
     plx
     pla
+
     rts
 
 _hangman_buffer_parse:
-    lda     BUFFER
+    lda     IB_BASE                         ;
+    sta     BUFFER                          ;   BUFFER = IB_BASE
+    tax
+
+    cmp     #'A'                            ;
+    bcc     @continue                       ;   if (A < 'A') check command.
+    cmp     #91                             ;
+    bcs     @continue                       ;   if (A > 'Z') check command.
+
+    jsr     _hangman_character_search       ;   cauta caracterul in sir.
+    bra     @end
+
+@continue:
+    txa
     cmp     #'q'
     beq     @quit
     cmp     #'h'
     beq     @help
-
-    ;
-    ;   verifica caracterul
-    ;
 
     bra     @error
 @quit:  
@@ -226,17 +245,54 @@ _hangman_word_length:
     lda     (WORD_PTR), Y                   ;
     beq     @end                            ;   A = 0 -> salt la @end
     iny                                     ;   Y = Y + 1
-    bra     @loop                           ;   continua
+    bne     @end
 @end:
+    iny
     sty     WORD_LENGTH                     ;   WORD_LENGTH = Y
     ply
     pla
     rts
 
+_hangman_status_print:
+    pha
+
+    lda     #<msg_lives                     ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_lives                     ;   
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+    lda     LIVES                           ;   Afiseaza numarul de incercari ramase.
+    jsr     sys_num2str                     ;
+    lda     #<NUM2STR                       ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>NUM2STR                       ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+    lda     #<msg_hidden_word               ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_hidden_word               ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;   Afiseaza cuvantul ascuns.
+    lda     WORD_HIDDEN_PTR                 ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     WORD_HIDDEN_PTR + 1             ;
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+    lda     #<msg_prompt                    ;
+    sta     ZP_STRING_BUFFER                ;
+    lda     #>msg_prompt                    ;   Afisare prompt.
+    sta     ZP_STRING_BUFFER + 1            ;
+    jsr     sys_uart_string_write           ;
+
+    pla
+
+    rts
+
+
 _hangman_help:
     lda     #<msg_help                      ;
     sta     ZP_STRING_BUFFER                ;
-    lda     #>msg_help                      ;   Afiseaza meniul help.
+    lda     #>msg_help                      ;
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
 
@@ -245,7 +301,7 @@ _hangman_help:
 _hangman_error:
     lda     #<msg_error                     ;
     sta     ZP_STRING_BUFFER                ;
-    lda     #>msg_error                     ;   Afiseaza meniul help.
+    lda     #>msg_error                     ;
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
 

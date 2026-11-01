@@ -72,7 +72,7 @@ HAND_PLAYER     =   $02     ;   valoarea acumulata de jucator
 TMP0            =   $03
 TMP1            =   $04
 DECK_POS        =   $05     ;   pozitia in pachetul de carti
-DECK_BASE       =   $7F00   ;   ultimele 52 de pozitii din RAM sunt pachetul de carti
+DECK_BASE       =   $7FCB   ;   ultimele 52 de pozitii din RAM sunt pachetul de carti
 ;7FCB
 
 .code

@@ -19,7 +19,7 @@
 
 .rodata
 msg_sys_init:
-.asciiz "\n\rMCX65 v1.0\n\rCopyright 2026 Morosanu Nicolas. All rights reserved.\n\r\n\r"
+.asciiz "\n\rMCX65 v1.0\n\rCopyright 2026 Nicolas Morosanu. All rights reserved.\n\r\n\r"
 
 msg_sys_invalid_cmd:
 .asciiz "Invalid command!\n\r"
