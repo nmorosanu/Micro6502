@@ -1,6 +1,6 @@
 ;
 ;   File:           utils.s
-;   Description:    Some subroutines which can be used in one or more submodules / programs
+;   Description:    A collection of subroutines for everyday needs.
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
 ;   Modified:       01.11.2026

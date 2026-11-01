@@ -1,10 +1,10 @@
 ;
 ;   File:           peripherals.s
-;   Description:    A collection of subroutines for managing the system's peripherals 
+;   Description:    A collection of subroutines for managing the system's peripherals.
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
-;   Modified:       31.10.2026
-;   Version:        0.0.1
+;   Modified:       01.11.2026
+;   Version:        1.0.0
 ;   
 
 .include    "./inc/memory.inc"

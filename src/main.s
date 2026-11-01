@@ -4,7 +4,7 @@
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
 ;   Modified:       01.11.2026
-;   Version:        0.0.1
+;   Version:        1.0.0
 ;   
 
 ;

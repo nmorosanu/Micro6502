@@ -4,7 +4,7 @@
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
 ;   Modified:       01.11.2026
-;   Version:        0.0.1
+;   Version:        1.0.0
 ;   
 
 ;
@@ -49,26 +49,33 @@ w0: .asciiz "PROCESSOR"
 w1: .asciiz "GALAXY"
 w2: .asciiz "PARTICLE"
 w3: .asciiz "NATURE"
+w4: .asciiz "AIRPLANE"
+w5: .asciiz "CRUCEAMATII"
+w6: .asciiz "NATURE"
+w7: .asciiz "LINUX"
 
 words:
 .word   w0
 .word   w1
 .word   w2
 .word   w3
+.word   w4
+.word   w5
+.word   w6
+.word   w7
 
 .data
-WORD_BUFFER_BASE    =   $7F00   ;   inceputul copiei pentru cuvantul selectat.
 LIVES               =   $00     ;   vieti / incercari ramase.
-GUESSED             =   $01     ;   numarul de ghicite.
-BUFFER              =   $02     ;   buffer de un caracter.
-WORD_IDX            =   $03     ;   indicele cuvantului din lista de cuvinte.
-WORD_PTR            =   $04     ;   ptr la cuvantul ales.
-WORD_LENGTH         =   $05     ;   ptr la cuvantul ales.
-WORD_HIDDEN_PTR     =   $06     ;   ptr la cuvantul ascuns.
+BUFFER              =   $01     ;   buffer de un caracter.
+WORD_PTR            =   $02     ;   [$02, $03] ptr la cuvantul ales.
+WORD_HIDDEN_PTR     =   $04     ;   [$04, $05] ptr la cuvantul ascuns.
 
 .code
 .global _hangman_init
 _hangman_init:
+    lda     #$55
+    sta     PRNG_SEED
+
     lda     #<msg_init
     sta     ZP_STRING_BUFFER
     lda     #>msg_init
@@ -79,23 +86,25 @@ MAINLOOP:
     lda     #5                              ;
     sta     LIVES                           ;   LIVES = 5
 
-    lda     #4                              ;
+    lda     #8                              ;
+    sta     PRNG_SEED                       ;
     sta     PRNG_VAL_MAX                    ;
+
     jsr     sys_prng                        ;
     asl
     tax
-    sta     WORD_IDX                        ;   WORD_IDX = random(0, 4)
     lda     words, X                        ;
     sta     WORD_PTR                        ;
     lda     words + 1, X                    ;
     sta     WORD_PTR + 1                    ;   char* WORD_PTR = words[X]
+    lda     #5
+    sta     PRNG_VAL_MAX
 
-    lda     #<WORD_BUFFER_BASE
+    lda     #$00
     sta     WORD_HIDDEN_PTR
-    lda     #>WORD_BUFFER_BASE
+    lda     #$7F
     sta     WORD_HIDDEN_PTR + 1
 
-    jsr     _hangman_word_length            ;   needs more examination
     jsr     _hangman_word_buffer_load       ;   needs more examination
 
 @loop:
@@ -128,43 +137,46 @@ MAINLOOP:
     bra     MAINLOOP
 
 _hangman_strcmp:
+    ldy     #0
+
 @loop:
-    lda     (WORD_PTR), Y                   ;
-    beq     @end                            ;   while (A != '\0') {
+    lda     (WORD_PTR), Y
+    beq     @end
 
-    cmp     (WORD_HIDDEN_PTR), Y            ;       if (WORD_PTR[Y] != WORD_HIDDEN_PTR[Y])
-    beq     @loop                           ;           return 1;
-                                            ;       ++Y;
-    lda     #1                              ;   }
-    rts                                     ;
+    cmp     (WORD_HIDDEN_PTR), Y
+    bne     @ne
 
-@end:                                       ;   return 0;
-    lda     #0                              ;
+    iny
+    bne     @loop
+@ne:
+    lda     #1
+    rts
 
+@end:
+    lda     #0
     rts
 
 _hangman_word_buffer_load:
     pha
     phy
 
-    lda     #'_'                            ;
-    ldy     WORD_LENGTH                     ;   while (Y != 0) {
-@loop:                                      ;       WORD_HIDDEN_PTR[Y] = '_';
-    dey                                     ;       --Y;
-    sta     (WORD_HIDDEN_PTR), Y            ;   }
-    bne     @loop                           ;
+    ldy     #0
+@loop:
+    lda     (WORD_PTR), Y
+    beq     @end
+    
+    lda     #'_'
+    sta     (WORD_HIDDEN_PTR), Y
+    iny
+    bne     @loop
 
-    lda     WORD_LENGTH                     ;
-    sta     PRNG_VAL_MAX                    ;   % WORD_LENGTH
-
-    tay                                     ;
-    lda     #0                              ;
-    sta     (WORD_HIDDEN_PTR), Y            ;   WORD_HIDDEN_PTR[WORD_LENGTH] = '\0';
-
-    jsr     sys_prng                        ;   A = random(0, WORD_LENGTH)
-    tay                                     ;
-    lda     (WORD_PTR), Y                   ;   Y = A;
-    sta     (WORD_HIDDEN_PTR), Y            ;   WORD_HIDDEN_PTR[Y] = WORD_PTR[Y];
+@end:
+    lda     #0   
+    sta     (WORD_HIDDEN_PTR), Y
+    jsr     sys_prng
+    tay
+    lda     (WORD_PTR), Y
+    sta     (WORD_HIDDEN_PTR), Y
 
     ply
     pla
@@ -215,7 +227,6 @@ _hangman_buffer_parse:
 
     jsr     _hangman_character_search       ;   cauta caracterul in sir.
     bra     @end
-
 @continue:
     txa
     cmp     #'q'
@@ -236,22 +247,6 @@ _hangman_buffer_parse:
     dec     IB_READY
     rts
 
-_hangman_word_length:
-    pha
-    phy
-
-    ldy     #$00                            ;   Y = 0
-@loop:                                      ;
-    lda     (WORD_PTR), Y                   ;
-    beq     @end                            ;   A = 0 -> salt la @end
-    iny                                     ;   Y = Y + 1
-    bne     @end
-@end:
-    iny
-    sty     WORD_LENGTH                     ;   WORD_LENGTH = Y
-    ply
-    pla
-    rts
 
 _hangman_status_print:
     pha
@@ -288,7 +283,6 @@ _hangman_status_print:
 
     rts
 
-
 _hangman_help:
     lda     #<msg_help                      ;
     sta     ZP_STRING_BUFFER                ;
@@ -314,6 +308,7 @@ _hangman_quit:
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
 
+    dec     IB_READY
     jmp     ($FFF8)                         ;   salt -> "HOME"
 
     rts

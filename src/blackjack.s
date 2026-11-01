@@ -4,7 +4,7 @@
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
 ;   Modified:       01.11.2026
-;   Version:        0.0.1
+;   Version:        1.0.0
 ;   
 
 .include "inc/memory.inc"
@@ -14,11 +14,10 @@
 .feature string_escapes
 
 .rodata
-cards:  .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
-        .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
-        .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
-        .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10
-        ;     A  2  3  4  5  6  7  8  9  10,  J,  Q,  K
+cards:  .byte 1, 2, 5, 4, 3, 6, 7, 8, 9, 10, 10, 10, 10
+        .byte 10, 10, 10, 5, 6, 8, 7, 4, 3, 9, 10, 2, 1
+        .byte 1, 2, 10, 9, 3, 4, 7, 8, 6, 5, 10, 10, 10
+        .byte 10, 10, 10, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
 
 msg_init:
 .asciiz "\n\rBLACKJACK GAME\n\rBoth you and the computer draw 2 cards at first.\n\rType 'h' to print the help menu.\n\r"
@@ -78,6 +77,9 @@ DECK_BASE       =   $7FCB   ;   ultimele 52 de pozitii din RAM sunt pachetul de 
 .code
 .export _blackjack_init
 _blackjack_init:
+    lda     #$5A
+    sta     PRNG_SEED
+
     lda     #<msg_init                      ;
     sta     ZP_STRING_BUFFER                ;
     lda     #>msg_init                      ;   Afiseaza mesaj de initializare

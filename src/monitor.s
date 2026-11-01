@@ -1,6 +1,6 @@
 ;
 ;   File:           monitor.s
-;   Description:    A monitor program for analyzing the memory of the system
+;   Description:    A monitor program for analyzing the system's memory.
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
 ;   Modified:       01.11.2026

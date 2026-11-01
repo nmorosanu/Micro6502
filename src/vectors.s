@@ -1,12 +1,11 @@
 ;
 ;   File:           vectors.s
-;   Description:    The NMI, RESET and IRQ vectors
+;   Description:    The NMI, RESET and IRQ vectors.
 ;   Author:         Morosanu Nicolas
 ;   Created:        29.10.2026
 ;   Modified:       01.11.2026
 ;   Version:        0.0.1
 ;   
-
 
 .include    "./inc/memory.inc"
 .include    "./inc/peripherals.inc"
@@ -19,13 +18,13 @@
 
 .rodata
 msg_sys_init:
-.asciiz "\n\rMCX65 v1.0\n\rCopyright 2026 Nicolas Morosanu. All rights reserved.\n\r\n\r"
+.asciiz "\n\rYAMC65X v1.0\n\rCopyright 2026 Nicolas Morosanu. All rights reserved.\n\r\n\r"
 
 msg_sys_invalid_cmd:
 .asciiz "Invalid command!\n\r"
 
 msg_prompt:
-.asciiz "\n\r > "
+.asciiz " [shell] > "
 
 .code
 .export NMI
@@ -38,14 +37,18 @@ RESET:
     ldx     #$FF                            ;   
     txs                                     ;   init stiva
     cld                                     ;   decimal mode dezactivat
-    
     stz     IB_IDX
     stx     IB_READY
-    lda     #$AA
+    lda     #$A5
     sta     PRNG_SEED
-    sta     PRNG_VAL_MAX
-
+    stz     PRNG_VAL_MAX
     jsr     sys_peripherals_config
+    cli
+
+HOME:
+    sei                                     ;
+    ldx     #$FF                            ;
+    txs                                     ;
 
     lda     #<msg_sys_init
     sta     ZP_STRING_BUFFER
@@ -53,21 +56,13 @@ RESET:
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
 
-    cli
-HOME:
-    sei                                     ;
-    ldx     #$FF                            ;
-    txs                                     ;
     cli                                     ;
-
+PROMPT:
     lda     #<msg_prompt
     sta     ZP_STRING_BUFFER
     lda     #>msg_prompt
     sta     ZP_STRING_BUFFER + 1
     jsr     sys_uart_string_write
-    ;
-    ;   reinitialize vars
-    ;
 @loop_ib_ready:                             ;
     lda     IB_READY                        ;   Asteapta pana cand avem o comanda.
     bne     @loop_ib_ready                  ;
@@ -91,7 +86,7 @@ HOME:
     sta     ZP_STRING_BUFFER + 1            ;
     jsr     sys_uart_string_write           ;
 
-    bra     HOME                            ;   return.
+    bra     PROMPT                          ;   return.
 
 @monitor:
     jmp     _monitor_init
