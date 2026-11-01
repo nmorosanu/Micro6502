@@ -39,7 +39,7 @@ sim: $(OBJS)
 $(FIRMWARE): $(OBJS)
 	@mkdir -p $(DIR_BIN)
 	@echo "[Linking into $@] $<"
-	$(LD) $(LDFLAGS) -C mem.cfg $(OBJS)
+	$(LD) $(LDFLAGS) -C memory_map.cfg $(OBJS)
 
 $(DIR_OBJ)/%.c.o: $(DIR_SRC)/%.c
 	@mkdir -p $(DIR_OBJ)
